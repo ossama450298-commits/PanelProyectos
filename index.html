@@ -791,6 +791,12 @@ if(/github\.io$/.test(location.hostname)){
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
 
+/* ---------- Enlace de conexión (#gh=token): guarda el token en este dispositivo y lo borra de la URL ---------- */
+try{
+  const m = location.hash.match(/[#&]gh=([A-Za-z0-9_]+)/);
+  if(m){ localStorage.setItem(GH_KEY, m[1]); history.replaceState(null, "", location.pathname + location.search); }
+}catch(e){}
+
 /* ---------- Boot ---------- */
 applyLoaded(loadLocal()); applyTheme(); render();
 
