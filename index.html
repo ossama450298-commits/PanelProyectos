@@ -195,6 +195,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
       <p id="subline">Cargando…</p>
     </div>
     <div class="tools">
+      <button class="ghost" id="ghBtn" hidden>⚙ Conexión</button>
       <button class="ghost" id="themeBtn" title="Cambiar tema">◐ Tema</button>
       <button class="primary" id="newBtn">+ Nuevo proyecto</button>
     </div>
@@ -236,6 +237,18 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   </div>
 </dialog>
 
+<dialog id="ghDlg">
+  <h3>Conectar Claude por GitHub</h3>
+  <p style="margin:0 0 6px;color:var(--muted);font-size:14px">Tus mensajes se envían como issues al repositorio privado <strong>PanelClaude</strong>. Claude los procesa en GitHub Actions aunque no tengas Claude abierto y responde en 1–3 minutos.</p>
+  <label for="ghTok">Token de GitHub (solo con acceso a PanelClaude → Issues: lectura y escritura)</label>
+  <input id="ghTok" type="password" autocomplete="off" placeholder="github_pat_…">
+  <p style="margin:8px 0 0;font-size:13px"><a class="offlink" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token</a></p>
+  <p id="ghMsg" class="saved"></p>
+  <div class="row">
+    <button class="ghost danger" id="ghForget">Olvidar token</button><span style="flex:1"></span>
+    <button class="ghost" id="ghCancel">Cerrar</button><button class="primary" id="ghSave">Guardar y probar</button>
+  </div>
+</dialog>
 <script>
 (function(){
 "use strict";
@@ -293,7 +306,7 @@ let saveTimer = null;
 function save(){
   state.updatedAt = Date.now();
   // trim chats
-  for(const k in state.chats){ state.chats[k] = state.chats[k].slice(-24).map(m=>({role:m.role, content:String(m.content).slice(0,4000)})); }
+  for(const k in state.chats){ const a = state.chats[k]; if(a.length>24) a.splice(0, a.length-24); for(const m of a) m.content = String(m.content).slice(0,4000); }
   try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
@@ -443,7 +456,7 @@ Estado actual del panel (JSON):
 `;
 function makeTools(onAct, onSend){
   const getP = id => { const p = proj(id); if(!p) throw new Error("Proyecto no encontrado: "+id); return p; };
-  const done = (msg) => { onAct(msg); save(); render(); return {ok:true}; };
+  const done = (msg) => { onAct(msg); save(); if(!quietRender) render(); return {ok:true}; };
   return [
     {name:"crear_tarea",description:"Añade una tarea pendiente a un proyecto.",
      inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},texto:{type:"string"}},required:["proyecto_id","texto"]},
@@ -477,6 +490,7 @@ function offNote(){
     el("a",{class:"offlink",href:ARTIFACT_URL,target:"_blank",rel:"noopener"},"Abrir en Claude"));
 }
 let comments = null;
+let quietRender = false;
 const sendWhy = {no_session:"Abre el chat de Claude donde se creó el panel para poder enviarlo.", writers_only:"Solo el dueño del panel puede enviar peticiones al chat.", off:"Enviar al chat no está disponible en esta vista."};
 function sendCard(text, p){
   const card = el("div",{class:"send",style:p?`--cat:${CATS[p.cat]?.color||"var(--accent)"}`:""});
@@ -506,11 +520,124 @@ function sendCard(text, p){
   return card;
 }
 
+/* ---------- Puente con Claude vía GitHub (sin Claude abierto) ---------- */
+const QUEUE = "ossama450298-commits/PanelClaude";
+const GH_KEY = "panel-gh-token";
+const ghToken = () => { try{ return localStorage.getItem(GH_KEY)||""; }catch(e){ return ""; } };
+async function gh(path, opts={}){
+  const r = await fetch("https://api.github.com"+path, Object.assign({}, opts, {headers:{
+    "Authorization":"Bearer "+ghToken(), "Accept":"application/vnd.github+json", "Content-Type":"application/json"}}));
+  if(!r.ok){ const t = await r.text().catch(()=> ""); const e = new Error(r.status===401?"Token no válido o caducado.":r.status===404?"No hay acceso al repositorio PanelClaude con este token.":"GitHub respondió "+r.status); e.status=r.status; e.body=t; throw e; }
+  return r.status===204?null:r.json();
+}
+function ghBody(text, pid){
+  const snap = JSON.stringify(snapshot(), null, 0).slice(0, 60000);
+  return `<!-- panel-msg -->\n${text}\n\n<details><summary>Estado del panel${pid?" (proyecto: "+pid+")":""}</summary>\n\n\`\`\`json\n${snap}\n\`\`\`\n</details>`;
+}
+function applyPanelActions(text, notify){
+  const acts0=[]; const n0=notify; notify = msg => { acts0.push(msg); };
+  quietRender = true;
+  try{ text = applyInner(text, notify); } finally { quietRender = false; }
+  acts0.forEach(n0); return (acts0.length ? acts0.map(a=>"- ✓ "+a).join("\n")+"\n\n" : "") + text;
+}
+function applyInner(text, notify){
+  const m = text.match(/```panel-acciones\s*([\s\S]*?)```/);
+  if(!m) return text;
+  try{
+    const acts = JSON.parse(m[1]); const tools = makeTools(notify, null); const by = Object.fromEntries(tools.map(t=>[t.name,t]));
+    const map = {crear_tarea:"crear_tarea", marcar_tarea:"marcar_tarea", borrar_tarea:"borrar_tarea", cambiar_estado:"cambiar_estado", anadir_nota:"anadir_nota", crear_proyecto:"crear_proyecto"};
+    for(const a of (Array.isArray(acts)?acts:[])){ const t = by[map[a.accion]]; if(t){ try{ t.execute(a); }catch(e){ notify("No se pudo aplicar: "+(e.message||a.accion)); } } }
+  }catch(e){ notify("Claude envió cambios que no se pudieron leer."); }
+  return text.replace(m[0], "").trim();
+}
+const cleanReply = s => String(s).replace(/<!--\s*claude-reply\s*-->/,"").trim();
+const polls = {};
+async function ghSend(key, title, text){
+  state.ghIssues ||= {};
+  const body = ghBody(text, key);
+  let num = state.ghIssues[key];
+  let sentAt;
+  if(num){ const c = await gh(`/repos/${QUEUE}/issues/${num}/comments`,{method:"POST",body:JSON.stringify({body})}); sentAt=c.created_at; }
+  else { const i = await gh(`/repos/${QUEUE}/issues`,{method:"POST",body:JSON.stringify({title,body})}); num=i.number; state.ghIssues[key]=num; sentAt=i.created_at; }
+  state.ghPending ||= {}; state.ghPending[key] = sentAt; save();
+  return num;
+}
+function ghWait(key, onDone, onTick){
+  if(polls[key]) clearTimeout(polls[key]);
+  const num = state.ghIssues?.[key], since = state.ghPending?.[key];
+  if(!num || !since) return;
+  const start = Date.now();
+  const tick = async () => {
+    try{
+      const cs = await gh(`/repos/${QUEUE}/issues/${num}/comments?since=${encodeURIComponent(since)}&per_page=100`);
+      const r = cs.filter(c=>c.body && c.body.includes("claude-reply") && c.created_at >= since).pop();
+      if(r){ delete state.ghPending[key]; save(); polls[key]=null; onDone(cleanReply(r.body)); return; }
+    }catch(e){ onTick && onTick("Error consultando GitHub: "+e.message); }
+    const mins = Math.floor((Date.now()-start)/60000);
+    onTick && onTick(mins<1 ? "Claude está trabajando en GitHub… suele tardar 1–3 minutos." : `Claude sigue trabajando (${mins} min)…`);
+    if(Date.now()-start < 45*60000) polls[key] = setTimeout(tick, 12000);
+    else { onTick && onTick("Sin respuesta todavía. Revisa la pestaña Actions de PanelClaude."); polls[key]=null; }
+  };
+  polls[key] = setTimeout(tick, 8000);
+}
+function openGh(){ $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("ghDlg").showModal(); }
+$("ghBtn").onclick = openGh;
+$("ghCancel").onclick = ()=>$("ghDlg").close();
+$("ghForget").onclick = ()=>{ try{ localStorage.removeItem(GH_KEY); }catch(e){} $("ghTok").value=""; $("ghMsg").textContent="Token borrado de este dispositivo."; render(); };
+$("ghSave").onclick = async ()=>{
+  const v = $("ghTok").value.trim(); if(!v) return;
+  try{ localStorage.setItem(GH_KEY, v); }catch(e){ $("ghMsg").textContent="Este navegador no permite guardar el token."; return; }
+  $("ghMsg").textContent="Probando…";
+  try{ await gh(`/repos/${QUEUE}`); $("ghMsg").textContent="Conectado. Ya puedes hablar con Claude."; render(); setTimeout(()=>$("ghDlg").close(), 900); }
+  catch(e){ $("ghMsg").textContent = e.message; }
+};
+
+function paneChatGh(p){
+  const pane = el("div",{class:"pane"});
+  if(!ghToken()){
+    pane.append(el("p",{class:"off"},"Claude no está abierto aquí. Conéctalo por GitHub y responderá aunque no tengas Claude abierto. ",
+      el("button",{class:"primary",style:"margin-top:8px",onclick:openGh},"Conectar Claude"), " ",
+      el("a",{class:"offlink",href:ARTIFACT_URL,target:"_blank",rel:"noopener"},"o abrir en Claude")));
+    return pane;
+  }
+  const hist = state.chats[p.id] ||= [];
+  const box = el("div",{class:"chat","aria-live":"polite"});
+  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); box.scrollTop=box.scrollHeight; return m; };
+  pane.append(el("p",{class:"hint"},"Claude trabaja en GitHub: puede responder, cambiar el panel y subir cambios a tus repos. Tarda 1–3 minutos."));
+  for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
+  const status = el("div",{class:"msg act",style:"color:var(--muted)"});
+  const ta = el("textarea",{placeholder:"Escribe a Claude… (Enter para enviar)","aria-label":"Mensaje para Claude"});
+  const sendBtn = el("button",{class:"primary"},"Enviar");
+  const issueLink = () => state.ghIssues?.[p.id] ? el("a",{class:"offlink",style:"font-size:13px",href:`https://github.com/${QUEUE}/issues/${state.ghIssues[p.id]}`,target:"_blank",rel:"noopener"},"Ver en GitHub") : null;
+  const busy = () => !!state.ghPending?.[p.id];
+  const waitReply = () => {
+    sendBtn.disabled = true; box.append(status); status.textContent="Claude está trabajando en GitHub…";
+    ghWait(p.id, (text)=>{
+      const shown = applyPanelActions(text, ()=>{});
+      hist.push({role:"assistant",content:shown}); save(); render();
+    }, (t)=>{ status.textContent=t; });
+  };
+  async function send(){
+    const text = ta.value.trim(); if(!text || busy()) return;
+    ta.value=""; addMsg("user",text); hist.push({role:"user",content:text}); save();
+    sendBtn.disabled=true;
+    try{ await ghSend(p.id, `[Panel] ${p.name}`, text); waitReply(); }
+    catch(e){ addMsg("err","No se pudo enviar: "+e.message); hist.pop(); save(); sendBtn.disabled=false; }
+  }
+  ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
+  sendBtn.addEventListener("click",send);
+  pane.append(box, el("div",{class:"composer"},ta,el("div",{style:"display:flex;flex-direction:column;gap:6px;align-items:flex-start"},sendBtn,issueLink())));
+  if(busy()) waitReply();
+  setTimeout(()=>{box.scrollTop=box.scrollHeight;},0);
+  return pane;
+}
+
 let chatCtl = null;
 function paneChat(p){
   const pane = el("div",{class:"pane"});
   if(!sample){
-    pane.append(sampleChecked ? offNote() : el("p",{class:"off"},"Conectando con Claude…"));
+    if(sampleChecked) return paneChatGh(p);
+    pane.append(el("p",{class:"off"},"Conectando con Claude…"));
     return pane;
   }
   const hist = state.chats[p.id] ||= [];
@@ -559,7 +686,17 @@ async function askGlobal(){
   const q = $("globalInput").value.trim(); if(!q) return;
   const out=$("globalOut"), txt=$("globalText");
   out.classList.add("show");
-  if(!sample){ if(sampleChecked) txt.replaceChildren(offNote()); else txt.textContent="Conectando con Claude… vuelve a intentarlo en unos segundos."; return; }
+  if(!sample){
+    if(!sampleChecked){ txt.textContent="Conectando con Claude… vuelve a intentarlo en unos segundos."; return; }
+    if(!ghToken()){ txt.replaceChildren(offNote()); openGh(); return; }
+    if(state.ghPending?.general){ txt.textContent="Claude todavía está con tu pregunta anterior."; return; }
+    txt.textContent="Enviando a Claude…";
+    try{
+      await ghSend("general","[Panel] General",q); $("globalInput").value="";
+      ghWait("general",(t)=>{ const s=applyPanelActions(t,()=>{}); render(); setHTMLSafe(txt,s); }, (m)=>{ txt.textContent=m; });
+    }catch(e){ txt.textContent="No se pudo enviar: "+e.message; }
+    return;
+  }
   txt.textContent="Pensando…"; globalCtl=new AbortController(); $("globalBtn").textContent="Detener";
   const acts=[]; $("globalOut").querySelectorAll(".send").forEach(n=>n.remove()); const cards=[];
   try{
@@ -619,7 +756,7 @@ if(/github\.io$/.test(location.hostname)){
 applyLoaded(loadLocal()); applyTheme(); render();
 
 (async function connect(){
-  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; if(tab==="claude") renderDetail(); return; }
+  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; render(); return; }
   try{
     const [s, d, u, c] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("user"), claude.use("comments")]);
     sample = s; comments = c; sampleChecked = true;
@@ -636,6 +773,7 @@ applyLoaded(loadLocal()); applyTheme(); render();
       }
     }
   }catch(e){ sampleChecked=true; }
+  if(!sample) $("ghBtn").hidden=false;
   render();
 })();
 })();
