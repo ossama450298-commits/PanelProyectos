@@ -67,7 +67,8 @@ button{cursor:pointer}
 .global-out .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted);font-size:13px}
 
 /* Layout */
-.grid{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:22px;align-items:start}
+.grid{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:22px;align-items:start}
+.grid>*{min-width:0}
 @media (max-width:860px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
 
 /* Project list */
