@@ -213,7 +213,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 
   <div class="grid">
     <nav class="list" aria-label="Proyectos">
-      <div class="list-head"><h2>Proyectos</h2><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></div>
+      <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
       <div class="filters" id="filters"></div>
       <div id="projList"></div>
     </nav>
@@ -240,7 +240,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 <dialog id="ghDlg">
   <h3>Conectar Claude por GitHub</h3>
   <p style="margin:0 0 6px;color:var(--muted);font-size:14px">Tus mensajes se envían como issues al repositorio privado <strong>PanelClaude</strong>. Claude los procesa en GitHub Actions aunque no tengas Claude abierto y responde en 1–3 minutos.</p>
-  <label for="ghTok">Token de GitHub (solo con acceso a PanelClaude → Issues: lectura y escritura)</label>
+  <label for="ghTok">Token de GitHub (solo PanelClaude → Issues y Contents: lectura y escritura)</label>
   <input id="ghTok" type="password" autocomplete="off" placeholder="github_pat_…">
   <p style="margin:8px 0 0;font-size:13px"><a class="offlink" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token</a></p>
   <p id="ghMsg" class="saved"></p>
@@ -308,6 +308,7 @@ function save(){
   // trim chats
   for(const k in state.chats){ const a = state.chats[k]; if(a.length>24) a.splice(0, a.length-24); for(const m of a) m.content = String(m.content).slice(0,4000); }
   try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  if(typeof ghSyncSoon==="function") ghSyncSoon();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
     if(!docRef) return;
@@ -580,6 +581,44 @@ function ghWait(key, onDone, onTick){
   };
   polls[key] = setTimeout(tick, 8000);
 }
+/* Sincronización entre dispositivos: el estado vive en PanelClaude/panel-state.json */
+const STATE_PATH = `/repos/${QUEUE}/contents/panel-state.json`;
+let ghSha = null, ghSyncTimer = null, ghSyncing = false, ghSyncReady = false;
+const b64e = s => { const b = new TextEncoder().encode(s); let x=""; for(let i=0;i<b.length;i+=0x8000) x += String.fromCharCode.apply(null, b.subarray(i,i+0x8000)); return btoa(x); };
+const b64d = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")), c=>c.charCodeAt(0)));
+function syncLabel(t){ const n=$("syncLbl"); if(n) n.textContent=t; }
+async function ghPull(){
+  if(!ghToken() || sample) return;
+  try{
+    const f = await gh(STATE_PATH);
+    ghSha = f.sha;
+    const remote = JSON.parse(b64d(f.content));
+    if((remote.updatedAt||0) > (state.updatedAt||0)){ applyLoaded(remote); try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} applyTheme(); render(); }
+    syncLabel("Sincronizado");
+  }catch(e){
+    if(e.status===404){ ghSha=null; syncLabel("Primera sincronización…"); }
+    else { syncLabel("Sin sincronizar: "+e.message); ghSyncReady = true; return; }
+  }
+  ghSyncReady = true;
+  if(!ghSha) ghPush();
+}
+async function ghPush(retry=true){
+  if(!ghToken() || sample || !ghSyncReady) return;
+  if(ghSyncing){ ghSyncSoon(); return; }
+  ghSyncing = true;
+  try{
+    const body = {message:"Panel: guardar estado", content: b64e(JSON.stringify(state)), branch:"main"};
+    if(ghSha) body.sha = ghSha;
+    const r = await gh(STATE_PATH, {method:"PUT", body: JSON.stringify(body)});
+    ghSha = r.content.sha; syncLabel("Sincronizado");
+  }catch(e){
+    if((e.status===409||e.status===422) && retry){ ghSyncing=false; ghSyncReady=false; await ghPull(); return ghPush(false); }
+    syncLabel("Sin sincronizar: "+e.message);
+  }finally{ ghSyncing = false; }
+}
+function ghSyncSoon(){ if(!ghToken() || sample || !ghSyncReady) return; clearTimeout(ghSyncTimer); syncLabel("Guardando…"); ghSyncTimer = setTimeout(()=>ghPush(), 2500); }
+addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && ghSyncReady && !ghSyncing) ghPull(); });
+
 function openGh(){ $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("ghDlg").showModal(); }
 $("ghBtn").onclick = openGh;
 $("ghCancel").onclick = ()=>$("ghDlg").close();
@@ -588,7 +627,7 @@ $("ghSave").onclick = async ()=>{
   const v = $("ghTok").value.trim(); if(!v) return;
   try{ localStorage.setItem(GH_KEY, v); }catch(e){ $("ghMsg").textContent="Este navegador no permite guardar el token."; return; }
   $("ghMsg").textContent="Probando…";
-  try{ await gh(`/repos/${QUEUE}`); $("ghMsg").textContent="Conectado. Ya puedes hablar con Claude."; render(); setTimeout(()=>$("ghDlg").close(), 900); }
+  try{ await gh(`/repos/${QUEUE}`); $("ghMsg").textContent="Conectado. Ya puedes hablar con Claude."; ghSyncReady=false; ghSha=null; await ghPull(); render(); setTimeout(()=>$("ghDlg").close(), 900); }
   catch(e){ $("ghMsg").textContent = e.message; }
 };
 
@@ -756,7 +795,7 @@ if(/github\.io$/.test(location.hostname)){
 applyLoaded(loadLocal()); applyTheme(); render();
 
 (async function connect(){
-  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; render(); return; }
+  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; render(); ghPull(); return; }
   try{
     const [s, d, u, c] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("user"), claude.use("comments")]);
     sample = s; comments = c; sampleChecked = true;
@@ -773,7 +812,7 @@ applyLoaded(loadLocal()); applyTheme(); render();
       }
     }
   }catch(e){ sampleChecked=true; }
-  if(!sample) $("ghBtn").hidden=false;
+  if(!sample){ $("ghBtn").hidden=false; ghPull(); }
   render();
 })();
 })();
