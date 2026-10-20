@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel de proyectos · Oussama</title>
+<meta name="theme-color" content="#2F54EB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Proyectos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F5; --panel:#FFFFFF; --panel2:#F6F8FB; --ink:#1B2340; --muted:#5B6480; --line:#D7DCE6;
+  --accent:#2F54EB; --accent-ink:#FFFFFF; --ok:#13875F; --warn:#B7791F; --bad:#C2352B;
+  --c-juego:#7A3FF2; --c-escuela:#0E9F8A; --c-trabajo:#B7791F; --c-auto:#2F7DD1; --c-web:#D23F7E;
+  --user-bubble:#2F54EB; --user-ink:#fff; --bot-bubble:#F1F3F8;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
+    --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F;
+    --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
+    --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
+  --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F;
+  --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
+  --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 22px 40px}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;margin-bottom:22px}
+.hero h1{font:800 clamp(28px,4.4vw,48px)/1.05 var(--display);letter-spacing:-.02em;margin:0;max-width:22ch}
+.hero p{margin:8px 0 0;color:var(--muted)}
+.hero .tools{display:flex;gap:8px}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink)}
+.ghost:hover{border-color:var(--muted)}
+.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 14px;font-weight:600}
+.primary:disabled{opacity:.55;cursor:default}
+
+/* Ask bar */
+.ask{display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px 8px 8px 16px;margin-bottom:26px;align-items:center}
+.ask input{flex:1;border:0;background:transparent;outline:none;padding:8px 0;min-width:0}
+.ask .lbl{font:700 14px var(--display);color:var(--accent);white-space:nowrap}
+.global-out{margin:-14px 0 26px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:none}
+.global-out.show{display:block}
+.global-out .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted);font-size:13px}
+
+/* Layout */
+.grid{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:22px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
+
+/* Project list */
+.list{display:flex;flex-direction:column;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px;position:sticky;top:calc(14px + env(safe-area-inset-top,0px))}
+@media (max-width:860px){.list{position:static}}
+.list-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px 10px}
+.list-head h2{font:700 17px var(--display);margin:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:0 8px 10px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:13px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.proj{display:grid;grid-template-columns:4px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;border:0;background:transparent;border-radius:12px;padding:10px 10px 10px 0}
+.proj:hover{background:var(--panel2)}
+.proj[aria-current="true"]{background:var(--panel2)}
+.proj .bar{height:100%;min-height:38px;border-radius:0 4px 4px 0;background:var(--cat)}
+.proj .name{font-weight:600;line-height:1.25}
+.proj .sub{font-size:13px;color:var(--muted)}
+.ring{--p:0;width:34px;height:34px;border-radius:50%;background:conic-gradient(var(--cat) calc(var(--p)*1%), var(--line) 0);display:grid;place-items:center}
+.ring span{width:26px;height:26px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--muted)}
+.proj[aria-current="true"] .ring span,.proj:hover .ring span{background:var(--panel2)}
+
+/* Detail */
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.d-top{padding:22px 24px 18px;border-bottom:1px solid var(--line);position:relative}
+.d-top::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--cat)}
+.d-cat{font-size:13px;color:var(--cat);font-weight:600}
+.d-top h2{font:800 clamp(24px,3vw,34px)/1.1 var(--display);margin:2px 0 8px;letter-spacing:-.015em}
+.d-top p{margin:0;color:var(--muted);max-width:68ch}
+.d-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+.status{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--panel2)}
+.d-meta a{color:var(--accent);text-decoration:none;font-weight:500}
+.d-meta a:hover{text-decoration:underline}
+.tabs{display:flex;gap:4px;padding:10px 16px 0;border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;padding:10px 12px;border-bottom:2px solid transparent;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--cat)}
+.pane{padding:18px 24px 24px}
+.pane[hidden]{display:none}
+
+/* Tasks */
+.add{display:flex;gap:8px;margin-bottom:14px}
+.add input{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:9px 12px}
+.tasks{list-style:none;margin:0;padding:0}
+.task{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:10px 4px;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.task input{width:18px;height:18px;margin-top:2px;accent-color:var(--cat)}
+.task.done .txt{color:var(--muted);text-decoration:line-through}
+.task .del{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0 4px}
+.task .del:hover{color:var(--bad)}
+.empty{color:var(--muted);padding:18px 4px}
+
+/* Notes */
+.notes textarea{width:100%;min-height:240px;border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:12px;resize:vertical;line-height:1.55}
+.saved{font-size:13px;color:var(--muted);margin-top:6px;min-height:1.2em}
+
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:12px;max-height:56vh;min-height:220px;overflow-y:auto;padding:4px 2px 12px}
+.msg{max-width:86%;padding:10px 14px;border-radius:16px;line-height:1.5;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--user-bubble);color:var(--user-ink);border-bottom-right-radius:4px;white-space:pre-wrap}
+.msg.bot{align-self:flex-start;background:var(--bot-bubble);border-bottom-left-radius:4px}
+.msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin:0}
+.msg.bot ul{margin:4px 0 8px;padding-left:20px}
+.msg.bot code{background:var(--panel);padding:1px 5px;border-radius:5px;font-size:13px}
+.msg.act{align-self:flex-start;font-size:13px;color:var(--ok);padding:2px 6px}
+.msg.err{align-self:flex-start;font-size:13px;color:var(--bad);padding:2px 6px}
+.composer{display:flex;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.composer textarea{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px 12px;resize:none;height:46px;max-height:160px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.sugg button{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:13px;color:var(--muted)}
+.sugg button:hover{border-color:var(--cat);color:var(--ink)}
+.send{align-self:stretch;border:1px solid var(--cat,var(--accent));border-radius:14px;padding:12px 14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px}
+.send .t{font-weight:600;font-size:14px}
+.send textarea{width:100%;min-height:70px;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 10px;resize:vertical;font-size:14px}
+.send .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.send .why{font-size:13px;color:var(--muted)}
+.send.sent{border-style:dashed}
+.off{color:var(--muted);font-size:14px;background:var(--panel2);border-radius:12px;padding:12px 14px}
+
+/* Dialog */
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--ink);padding:22px;width:min(460px,92vw)}
+dialog::backdrop{background:rgba(10,14,30,.45)}
+dialog h3{font:700 20px var(--display);margin:0 0 14px}
+dialog label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+dialog input,dialog select,dialog textarea{width:100%;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:9px 12px}
+dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.danger{color:var(--bad);border-color:var(--line)}
+.back{display:none;border:0;background:transparent;color:var(--accent);font-weight:600;padding:2px 0 10px;font-size:16px}
+.offlink{color:var(--accent);font-weight:600}
+@media (max-width:860px){
+  .wrap{padding:16px 14px 28px}
+  .hero{gap:12px;margin-bottom:16px}
+  .hero h1{font-size:28px}
+  .hero .tools{justify-content:flex-start}
+  .ask{margin-bottom:18px;padding:6px 6px 6px 14px}
+  .ask .lbl{display:none}
+  body.show-detail .hero, body.show-detail .ask, body.show-detail .global-out, body.show-detail .list{display:none}
+  body:not(.show-detail) .detail{display:none}
+  .back{display:inline-flex;align-items:center;min-height:36px}
+  .detail{overflow:visible;border-radius:18px}
+  .d-top{padding:14px 18px 14px;border-radius:18px 18px 0 0;overflow:hidden}
+  .d-top h2{font-size:26px}
+  .tabs{overflow-x:auto;padding:4px 8px 0;-webkit-overflow-scrolling:touch}
+  .tab{white-space:nowrap;padding:12px 12px;min-height:44px}
+  .pane{padding:14px 16px 18px}
+  .chat{max-height:none;min-height:45vh}
+  .composer{position:sticky;bottom:0;background:var(--panel);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2}
+  input,textarea,select{font-size:16px}
+  .chip{padding:6px 12px;font-size:14px}
+  .proj{padding:12px 10px 12px 0;min-height:56px}
+  .task{padding:12px 4px;align-items:center}
+  .task input{width:22px;height:22px;margin:0}
+  .task .del{font-size:24px;padding:4px 10px}
+  .msg{max-width:92%}
+  .primary,.ghost{min-height:42px}
+  dialog{margin:auto 0 0;width:100vw;max-width:100vw;border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <h1 id="headline">Tus proyectos, en un solo sitio</h1>
+      <p id="subline">Cargando…</p>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="themeBtn" title="Cambiar tema">◐ Tema</button>
+      <button class="primary" id="newBtn">+ Nuevo proyecto</button>
+    </div>
+  </header>
+
+  <form class="ask" id="globalForm" onsubmit="return false">
+    <span class="lbl">Claude</span>
+    <input id="globalInput" placeholder="Pregunta sobre todos tus proyectos: “¿qué priorizo esta semana?”" autocomplete="off">
+    <button class="primary" id="globalBtn" type="submit">Preguntar</button>
+  </form>
+  <section class="global-out" id="globalOut" aria-live="polite">
+    <div class="head"><span>Respuesta sobre todos los proyectos</span><button class="ghost" id="globalClose">Cerrar</button></div>
+    <div id="globalText" class="msg bot" style="max-width:none;background:transparent;padding:0"></div>
+  </section>
+
+  <div class="grid">
+    <nav class="list" aria-label="Proyectos">
+      <div class="list-head"><h2>Proyectos</h2><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></div>
+      <div class="filters" id="filters"></div>
+      <div id="projList"></div>
+    </nav>
+
+    <main class="detail" id="detail"></main>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle">Nuevo proyecto</h3>
+  <label for="fName">Nombre</label><input id="fName" maxlength="60">
+  <label for="fCat">Categoría</label>
+  <select id="fCat"></select>
+  <label for="fDesc">Descripción</label><textarea id="fDesc" rows="3" maxlength="400"></textarea>
+  <label for="fLink">Enlace (opcional)</label><input id="fLink" placeholder="https://github.com/…">
+  <div class="row">
+    <button class="ghost danger" id="dlgDelete" hidden>Eliminar</button>
+    <span style="flex:1"></span>
+    <button class="ghost" id="dlgCancel">Cancelar</button>
+    <button class="primary" id="dlgSave">Guardar</button>
+  </div>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+
+const CATS = {
+  juego:   {label:"Videojuego",       color:"var(--c-juego)"},
+  escuela: {label:"CFGS · Escuela",   color:"var(--c-escuela)"},
+  trabajo: {label:"Trabajo",          color:"var(--c-trabajo)"},
+  auto:    {label:"Automatización",   color:"var(--c-auto)"},
+  web:     {label:"Web personal",     color:"var(--c-web)"}
+};
+const STATUSES = ["Activo","En pausa","Bloqueado","Terminado"];
+
+const uid = () => Math.random().toString(36).slice(2,9);
+const T = (text, done=false) => ({id:"t"+uid(), text, done});
+
+const DEFAULT_PROJECTS = [
+  {id:"higienex", name:"HIGIENEX S.L.", cat:"escuela", status:"Activo",
+   desc:"Ecosistema web de la empresa ficticia de higiene profesional (proyecto CFGS AF2): web pública index.html y ERP/CRM interno higienex_erp.html con Firebase Auth, portal de clientes, ciclo contable e i18n en 5+ idiomas.",
+   link:"https://github.com/ossama450298-commits/Higienexweb",
+   tasks:[T("Quitar la suscripción HIGIENEX Premium de la web"), T("Revisar traducciones al árabe tras últimos cambios")], notes:""},
+  {id:"nexo9", name:"NEXO-9", cat:"juego", status:"Activo",
+   desc:"Juego web de deducción social estilo Among Us con identidad propia. Un solo HTML contra bots, publicado en GitHub Pages.",
+   link:"https://ossama450298-commits.github.io/Nexo9/",
+   tasks:[T("Añadir roles juez, cambiaformas e ingeniero"), T("Mejorar gráficos"), T("Mejorar la IA de los bots"), T("Megáfono sobre quien reporta"), T("Animación de eliminación")], notes:""},
+  {id:"blacksite", name:"BLACKSITE: VECTOR", cat:"juego", status:"Activo",
+   desc:"FPS táctico web original (VANGUARD vs RAVEN, mapa SECTOR-17) con la sensación de los shooters de 2000 y bots IA.",
+   link:"https://github.com/ossama450298-commits/BLACKSITEVECTOR",
+   tasks:[T("Personajes y armas lo más realistas posible"), T("Buscar mapas/escenarios realistas sin derechos de autor"), T("Mantener versión de un solo archivo blacksite-vector.html")], notes:""},
+  {id:"valmira", name:"Valmira: Sal y Asfalto", cat:"juego", status:"Activo",
+   desc:"Mundo abierto 3D para navegador en Three.js, inspirado en GTA V con contenido original y código modular.",
+   link:"", tasks:[T("Subir la calidad gráfica al máximo"), T("Crear repositorio en GitHub")], notes:""},
+  {id:"radar", name:"Radar MYSLF", cat:"auto", status:"Activo",
+   desc:"Email diario con ofertas de YSL MYSLF Le Parfum 100 ml: busca a las 6:00 y envía a las 7:00 (Madrid) con GitHub Actions.",
+   link:"", tasks:[T("Terminar la automatización en el repo myslf-radar"), T("Comprobar que llega el email de las 7:00")], notes:""},
+  {id:"ptm", name:"Contabilidad PauTravelMoto", cat:"trabajo", status:"Activo",
+   desc:"Conciliaciones de proveedores, Norma 43 (CaixaBank, Sabadell), facturas para la gestoría, IVA/IRPF trimestral y nóminas.",
+   link:"", tasks:[T("Preparar facturas del trimestre para la gestoría"), T("Revisar servicios prestados pendientes de facturar")], notes:""},
+  {id:"alegaciones", name:"Web de alegaciones", cat:"web", status:"Activo",
+   desc:"Página propia en GitHub enlazada desde el botón «Presentar alegaciones» de los correos en broma.",
+   link:"", tasks:[], notes:""},
+  {id:"mail", name:"HIGIENEX Mail", cat:"auto", status:"Terminado",
+   desc:"App de Google Cloud con permiso gmail.send para que Claude envíe correos con adjuntos (informes de proyectos, resúmenes de GitHub).",
+   link:"", tasks:[], notes:""}
+];
+
+/* ---------- State & persistence ---------- */
+let state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)), chats:{}, theme:null, updatedAt:0};
+let selected = "higienex", filter = "todos", tab = "tareas";
+let db = null, docRef = null, sample = null, sampleChecked = false;
+const LS_KEY = "panel-proyectos-v1";
+
+function loadLocal(){ try{ const s = localStorage.getItem(LS_KEY); if(s) return JSON.parse(s);}catch(e){} return null; }
+let saveTimer = null;
+function save(){
+  state.updatedAt = Date.now();
+  // trim chats
+  for(const k in state.chats){ state.chats[k] = state.chats[k].slice(-24).map(m=>({role:m.role, content:String(m.content).slice(0,4000)})); }
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    if(!docRef) return;
+    try{ await docRef.set({json: JSON.stringify(state)}); }catch(e){ console.warn("db save", e); }
+  }, 600);
+}
+function applyLoaded(s){
+  if(!s || !Array.isArray(s.projects)) return;
+  state = Object.assign({chats:{}}, s);
+  if(!state.projects.find(p=>p.id===selected)) selected = state.projects[0]?.id;
+}
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const proj = id => state.projects.find(p=>p.id===id);
+const pct = p => p.tasks.length ? Math.round(p.tasks.filter(t=>t.done).length / p.tasks.length * 100) : (p.status==="Terminado"?100:0);
+function el(tag, attrs={}, ...kids){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){
+    if(k==="class") n.className=v; else if(k==="style") n.style.cssText=v;
+    else if(k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if(v!==false && v!=null) n.setAttribute(k, v===true?"":v);
+  }
+  for(const c of kids.flat()){ if(c==null) continue; n.append(c.nodeType?c:document.createTextNode(c)); }
+  return n;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function md(s){
+  const lines = esc(s).split(/\n/); let html="", inList=false;
+  const inline = t => t.replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/(^|\W)\*([^*\n]+)\*(?=\W|$)/g,"$1<em>$2</em>");
+  for(const raw of lines){
+    const l = raw.trim();
+    const m = l.match(/^([-*•]|\d+\.)\s+(.*)/);
+    if(m){ if(!inList){html+="<ul>";inList=true;} html+="<li>"+inline(m[2])+"</li>"; continue; }
+    if(inList){html+="</ul>";inList=false;}
+    if(!l) continue;
+    const h = l.match(/^#{1,4}\s+(.*)/);
+    html += h ? "<p><strong>"+inline(h[1])+"</strong></p>" : "<p>"+inline(l)+"</p>";
+  }
+  if(inList) html+="</ul>";
+  return html;
+}
+function setHTMLSafe(node, s){ node.innerHTML = md(s); } // md() escapes everything first
+
+/* ---------- Mobile navigation ---------- */
+const isMobile = () => matchMedia("(max-width:860px)").matches;
+function openMobileDetail(){
+  if(!isMobile()) return;
+  document.body.classList.add("show-detail"); scrollTo(0,0);
+  try{ history.pushState({detail:1},""); }catch(e){}
+}
+function closeMobileDetail(fromPop){
+  document.body.classList.remove("show-detail"); renderList(); scrollTo(0,0);
+  if(!fromPop){ try{ if(history.state&&history.state.detail) history.back(); }catch(e){} }
+}
+addEventListener("popstate",()=>{ if(document.body.classList.contains("show-detail")) closeMobileDetail(true); });
+
+/* ---------- Render ---------- */
+function render(){
+  const open = state.projects.reduce((a,p)=>a+p.tasks.filter(t=>!t.done).length,0);
+  const active = state.projects.filter(p=>p.status==="Activo").length;
+  $("headline").textContent = `Oussama, tienes ${active} proyecto${active===1?"":"s"} en marcha`;
+  $("subline").textContent = `${open} tarea${open===1?"":"s"} abierta${open===1?"":"s"} en ${state.projects.length} proyectos. Pídele a Claude que las organice, las cree o te explique por dónde seguir.`;
+  $("countLbl").textContent = state.projects.length;
+  renderFilters(); renderList(); renderDetail();
+}
+function renderFilters(){
+  const f = $("filters"); f.replaceChildren();
+  const opts = [["todos","Todos"], ...Object.entries(CATS).filter(([k])=>state.projects.some(p=>p.cat===k)).map(([k,v])=>[k,v.label])];
+  for(const [k,label] of opts){
+    f.append(el("button",{class:"chip","aria-pressed":String(filter===k),onclick:()=>{filter=k;renderFilters();renderList();}},label));
+  }
+}
+function renderList(){
+  const L = $("projList"); L.replaceChildren();
+  const items = state.projects.filter(p=>filter==="todos"||p.cat===filter);
+  for(const p of items){
+    const open = p.tasks.filter(t=>!t.done).length, v = pct(p);
+    const b = el("button",{class:"proj","aria-current":String(p.id===selected),style:`--cat:${CATS[p.cat]?.color||"var(--accent)"}`,
+      onclick:()=>{selected=p.id;renderList();renderDetail(); openMobileDetail();}},
+      el("span",{class:"bar"}),
+      el("span",{}, el("div",{class:"name"},p.name), el("div",{class:"sub"},`${p.status} · ${open} pendiente${open===1?"":"s"}`)),
+      el("span",{class:"ring",style:`--p:${v}`,title:`${v}% completado`}, el("span",{},v+"%"))
+    );
+    L.append(b);
+  }
+  if(!items.length) L.append(el("div",{class:"empty"},"No hay proyectos en esta categoría."));
+}
+function renderDetail(){
+  const D = $("detail"); D.replaceChildren();
+  const p = proj(selected);
+  if(!p){ D.append(el("div",{class:"pane"},el("p",{class:"empty"},"Crea tu primer proyecto con «+ Nuevo proyecto»."))); return; }
+  D.style.setProperty("--cat", CATS[p.cat]?.color||"var(--accent)");
+  const sel = el("select",{class:"status","aria-label":"Estado",onchange:e=>{p.status=e.target.value;save();renderList();render();}},
+    STATUSES.map(s=>el("option",{value:s,selected:s===p.status},s)));
+  D.append(el("div",{class:"d-top"},
+    el("button",{class:"back",onclick:()=>closeMobileDetail(false)},"← Proyectos"),
+    el("div",{class:"d-cat"},CATS[p.cat]?.label||p.cat),
+    el("h2",{},p.name),
+    el("p",{},p.desc||"Sin descripción."),
+    el("div",{class:"d-meta"}, sel,
+      p.link ? el("a",{href:p.link,target:"_blank",rel:"noopener"},"Abrir enlace") : null,
+      el("button",{class:"ghost",onclick:()=>openDialog(p)},"Editar"))
+  ));
+  const tabs = [["tareas",`Tareas (${p.tasks.filter(t=>!t.done).length})`],["claude","Hablar con Claude"],["notas","Notas"]];
+  D.append(el("div",{class:"tabs",role:"tablist"}, tabs.map(([k,l])=>el("button",{class:"tab",role:"tab","aria-selected":String(tab===k),onclick:()=>{tab=k;renderDetail();}},l))));
+  if(tab==="tareas") D.append(paneTasks(p));
+  if(tab==="notas") D.append(paneNotes(p));
+  if(tab==="claude") D.append(paneChat(p));
+}
+function paneTasks(p){
+  const inp = el("input",{placeholder:"Añade una tarea y pulsa Enter",maxlength:"200"});
+  const add = ()=>{ const v=inp.value.trim(); if(!v) return; p.tasks.push(T(v)); inp.value=""; save(); render(); setTimeout(()=>document.querySelector(".add input")?.focus(),0); };
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();add();}});
+  const ul = el("ul",{class:"tasks"});
+  const sorted = [...p.tasks].sort((a,b)=>a.done-b.done);
+  for(const t of sorted){
+    ul.append(el("li",{class:"task"+(t.done?" done":"")},
+      el("input",{type:"checkbox",checked:t.done,"aria-label":"Completar",onchange:()=>{t.done=!t.done;save();render();}}),
+      el("span",{class:"txt"},t.text),
+      el("button",{class:"del","aria-label":"Eliminar tarea",onclick:()=>{p.tasks=p.tasks.filter(x=>x.id!==t.id);save();render();}},"×")));
+  }
+  return el("div",{class:"pane"}, el("div",{class:"add"},inp,el("button",{class:"primary",onclick:add},"Añadir")),
+    p.tasks.length?ul:el("p",{class:"empty"},"Sin tareas. Añade una o pídele a Claude que proponga las siguientes."));
+}
+function paneNotes(p){
+  const status = el("div",{class:"saved"});
+  let t=null;
+  const ta = el("textarea",{placeholder:"Ideas, enlaces, decisiones… Claude las tendrá en cuenta cuando le preguntes."});
+  ta.value = p.notes||"";
+  ta.addEventListener("input",()=>{ p.notes=ta.value; clearTimeout(t); status.textContent="Guardando…"; t=setTimeout(()=>{save();status.textContent="Guardado";},500); });
+  return el("div",{class:"pane notes"},ta,status);
+}
+
+/* ---------- Claude ---------- */
+function snapshot(onlyId){
+  const ps = onlyId ? [proj(onlyId)] : state.projects;
+  return ps.map(p=>({id:p.id,nombre:p.name,categoria:CATS[p.cat]?.label||p.cat,estado:p.status,descripcion:p.desc,enlace:p.link||null,
+    tareas:p.tasks.map(t=>({id:t.id,texto:t.text,hecha:t.done})),notas:(p.notes||"").slice(0,3000)}));
+}
+const RULES = (scopeTxt) => `Eres Claude, el asistente del panel de proyectos personal de Oussama (Barcelona; trabaja en contabilidad en PauTravelMoto y estudia/participa en el CFGS Administració i Finances). Responde siempre en español, de forma concisa y directa, sin relleno.
+Puedes GESTIONAR el panel con las herramientas: crear, completar o borrar tareas, cambiar estados, añadir notas y crear proyectos. Úsalas cuando te lo pida o cuando sea claramente lo que quiere; después resume en una frase lo que cambiaste. No inventes datos que no estén en el panel.
+Desde aquí no puedes tocar GitHub, enviar correos, editar los archivos de los juegos ni nada fuera del panel. Cuando te pida algo así, llama a la herramienta enviar_al_chat con la petición redactada de forma completa y autosuficiente (qué proyecto, qué hay que hacer exactamente, repositorio si lo hay y cualquier detalle que haya dado), y dile en una frase que pulse «Enviar al chat» para que Claude lo haga desde el chat. No digas que ya está hecho.
+${scopeTxt}
+Estado actual del panel (JSON):
+`;
+function makeTools(onAct, onSend){
+  const getP = id => { const p = proj(id); if(!p) throw new Error("Proyecto no encontrado: "+id); return p; };
+  const done = (msg) => { onAct(msg); save(); render(); return {ok:true}; };
+  return [
+    {name:"crear_tarea",description:"Añade una tarea pendiente a un proyecto.",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},texto:{type:"string"}},required:["proyecto_id","texto"]},
+     execute:({proyecto_id,texto})=>{ const p=getP(proyecto_id); const t=T(String(texto).slice(0,200)); p.tasks.push(t); return Object.assign(done(`Tarea añadida en ${p.name}: ${t.text}`),{tarea_id:t.id}); }},
+    {name:"marcar_tarea",description:"Marca una tarea como hecha (hecha=true) o pendiente (hecha=false).",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},tarea_id:{type:"string"},hecha:{type:"boolean"}},required:["proyecto_id","tarea_id","hecha"]},
+     execute:({proyecto_id,tarea_id,hecha})=>{ const p=getP(proyecto_id); const t=p.tasks.find(x=>x.id===tarea_id); if(!t) throw new Error("Tarea no encontrada"); t.done=!!hecha; return done(`${hecha?"Completada":"Reabierta"}: ${t.text}`); }},
+    {name:"borrar_tarea",description:"Elimina una tarea de un proyecto.",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},tarea_id:{type:"string"}},required:["proyecto_id","tarea_id"]},
+     execute:({proyecto_id,tarea_id})=>{ const p=getP(proyecto_id); const t=p.tasks.find(x=>x.id===tarea_id); if(!t) throw new Error("Tarea no encontrada"); p.tasks=p.tasks.filter(x=>x.id!==tarea_id); return done(`Tarea eliminada: ${t.text}`); }},
+    {name:"cambiar_estado",description:"Cambia el estado de un proyecto: Activo, En pausa, Bloqueado o Terminado.",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},estado:{type:"string",enum:STATUSES}},required:["proyecto_id","estado"]},
+     execute:({proyecto_id,estado})=>{ const p=getP(proyecto_id); if(!STATUSES.includes(estado)) throw new Error("Estado no válido"); p.status=estado; return done(`${p.name} ahora está «${estado}»`); }},
+    {name:"anadir_nota",description:"Añade un párrafo al final de las notas de un proyecto.",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string"},texto:{type:"string"}},required:["proyecto_id","texto"]},
+     execute:({proyecto_id,texto})=>{ const p=getP(proyecto_id); p.notes=((p.notes||"").trim()+"\n\n"+String(texto).slice(0,1500)).trim(); return done(`Nota añadida en ${p.name}`); }},
+    {name:"enviar_al_chat",description:"Prepara una petición para que Claude la haga desde el chat principal (subir a GitHub, enviar correos, editar juegos o webs, cualquier cosa que el panel no puede hacer). Oussama la enviará con un botón.",
+     inputSchema:{type:"object",properties:{proyecto_id:{type:"string",description:"id del proyecto, o vacío si es general"},peticion:{type:"string",description:"La petición completa y autosuficiente para Claude"}},required:["peticion"]},
+     execute:({proyecto_id,peticion})=>{ const p=proyecto_id?proj(proyecto_id):null; onSend&&onSend(String(peticion).slice(0,3000), p); return {ok:true, nota:"Se muestra un botón para enviarlo al chat; aún no se ha enviado."}; }},
+    {name:"crear_proyecto",description:"Crea un proyecto nuevo. categoria: juego, escuela, trabajo, auto o web.",
+     inputSchema:{type:"object",properties:{nombre:{type:"string"},categoria:{type:"string",enum:Object.keys(CATS)},descripcion:{type:"string"}},required:["nombre","categoria"]},
+     execute:({nombre,categoria,descripcion})=>{ const id="p"+uid(); state.projects.push({id,name:String(nombre).slice(0,60),cat:CATS[categoria]?categoria:"web",status:"Activo",desc:String(descripcion||"").slice(0,400),link:"",tasks:[],notes:""}); return Object.assign(done(`Proyecto creado: ${nombre}`),{proyecto_id:id}); }}
+  ];
+}
+const errCopy = e => ({not_granted:"No has permitido que esta página use Claude. Puedes activarlo desde el menú de permisos del artifact.",
+  rate_limited:"Demasiadas peticiones seguidas. Espera un momento y vuelve a probar.",cancelled:"Detenido."}[e?.code] || ("No se pudo obtener respuesta: "+(e?.message||"error desconocido")));
+
+const ARTIFACT_URL = "https://claude.ai/artifact/YYWLRHtQifuq9SZ9Sy3XwL";
+function offNote(){
+  return el("p",{class:"off"},"Aquí Claude no está conectado: tus tareas y notas funcionan, pero para hablar con Claude abre el panel en la app de Claude. ",
+    el("a",{class:"offlink",href:ARTIFACT_URL,target:"_blank",rel:"noopener"},"Abrir en Claude"));
+}
+let comments = null;
+const sendWhy = {no_session:"Abre el chat de Claude donde se creó el panel para poder enviarlo.", writers_only:"Solo el dueño del panel puede enviar peticiones al chat.", off:"Enviar al chat no está disponible en esta vista."};
+function sendCard(text, p){
+  const card = el("div",{class:"send",style:p?`--cat:${CATS[p.cat]?.color||"var(--accent)"}`:""});
+  const ta = el("textarea",{"aria-label":"Petición para el chat de Claude"}); ta.value = text;
+  const btn = el("button",{class:"primary"},"Enviar al chat");
+  const why = el("span",{class:"why"});
+  card.append(el("div",{class:"t"},"Esto lo tiene que hacer Claude desde el chat"), ta, el("div",{class:"r"},btn,why));
+  (async()=>{
+    if(!comments){ btn.disabled=true; why.textContent="Enviar al chat no está disponible en esta vista."; return; }
+    try{ const st = await comments.canSendToClaude(); if(st!=="available"){ btn.disabled=true; why.textContent=sendWhy[st]||sendWhy.off; } }
+    catch(e){ btn.disabled=true; why.textContent=sendWhy.off; }
+  })();
+  btn.addEventListener("click", async ()=>{
+    const body = ta.value.trim(); if(!body) return;
+    btn.disabled=true; why.textContent="Enviando…";
+    try{
+      const anchorEl = document.querySelector(".d-top") || $("headline");
+      const anchor = await comments.anchorFor(anchorEl);
+      await comments.sendToClaude({anchor, text: `[Panel de proyectos${p?" · "+p.name:""}] ${body}`});
+      card.classList.add("sent"); ta.readOnly=true; btn.textContent="Enviado"; why.textContent="Claude lo recibe en el chat y te contestará en el hilo de comentarios del panel.";
+      if(p){ p.tasks.push(T("En el chat: "+body.slice(0,120))); save(); renderList(); }
+    }catch(e){
+      btn.disabled=false;
+      why.textContent = e?.code==="claude_unavailable" ? sendWhy.no_session : e?.code==="consent_required"||e?.code==="not_granted" ? "Necesitas permitir los comentarios para enviarlo." : e?.code==="rate_limited" ? "Espera un momento antes de enviar otra." : "No se pudo enviar: "+(e?.message||"error");
+    }
+  });
+  return card;
+}
+
+let chatCtl = null;
+function paneChat(p){
+  const pane = el("div",{class:"pane"});
+  if(!sample){
+    pane.append(sampleChecked ? offNote() : el("p",{class:"off"},"Conectando con Claude…"));
+    return pane;
+  }
+  const hist = state.chats[p.id] ||= [];
+  const box = el("div",{class:"chat","aria-live":"polite"});
+  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); box.scrollTop=box.scrollHeight; return m; };
+  if(!hist.length) pane.append(el("p",{class:"hint"},`Claude ve las tareas, notas y estado de ${p.name} y puede cambiarlos por ti.`));
+  for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
+  const sugg = el("div",{class:"sugg"}, ["¿Qué hago ahora?","Divide la primera tarea en pasos","Propón 3 tareas nuevas","Resume el estado del proyecto"].map(s=>el("button",{onclick:()=>{ta.value=s;send();}},s)));
+  const ta = el("textarea",{placeholder:"Escribe a Claude… (Enter para enviar)","aria-label":"Mensaje para Claude"});
+  const sendBtn = el("button",{class:"primary"},"Enviar");
+  const clearBtn = el("button",{class:"ghost",title:"Borrar conversación",onclick:()=>{ state.chats[p.id]=[]; save(); renderDetail(); }},"Limpiar");
+  ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
+  ta.addEventListener("input",()=>{ta.style.height="46px";ta.style.height=Math.min(ta.scrollHeight,160)+"px";});
+  async function send(){
+    if(chatCtl){ chatCtl.abort(); return; }
+    const text = ta.value.trim(); if(!text) return;
+    ta.value=""; addMsg("user",text);
+    hist.push({role:"user",content:text}); save();
+    const bubble = addMsg("bot","Pensando…");
+    chatCtl = new AbortController(); sendBtn.textContent="Detener"; const pending=[];
+    const turns = [{role:"user",content: RULES(`Ahora estáis hablando del proyecto «${p.name}» (id: ${p.id}). Céntrate en él salvo que pregunte por otro.`) + JSON.stringify(snapshot())},
+                   {role:"assistant",content:"Entendido. Tengo el estado del panel."}, ...hist.slice(-16)];
+    try{
+      const {text:ans} = await sample(turns,{cache:false,signal:chatCtl.signal,
+        onText:({text})=>{ setHTMLSafe(bubble,text); box.scrollTop=box.scrollHeight; },
+        tools: makeTools(msg=>{ const a=el("div",{class:"msg act"},"✓ "+msg); box.insertBefore(a,bubble); },
+                         (txt,pp)=>{ pending.push(sendCard(txt, pp||p)); })});
+      pending.forEach(c=>{ box.append(c); }); pending.length=0; box.scrollTop=box.scrollHeight;
+      setHTMLSafe(bubble, ans||"(sin respuesta)");
+      hist.push({role:"assistant",content:ans||"(sin respuesta)"}); save();
+    }catch(e){
+      if(e?.text){ setHTMLSafe(bubble,e.text); hist.push({role:"assistant",content:e.text}); save(); } else bubble.remove();
+      addMsg("err", errCopy(e));
+      if(hist.length && hist[hist.length-1].role==="user") hist.pop();
+    }finally{ chatCtl=null; sendBtn.textContent="Enviar"; if(tab==="claude"&&selected===p.id) ta.focus(); }
+  }
+  sendBtn.addEventListener("click",send);
+  pane.append(box, hist.length?null:sugg, el("div",{class:"composer"},ta,el("div",{style:"display:flex;flex-direction:column;gap:6px"},sendBtn,clearBtn)));
+  setTimeout(()=>{box.scrollTop=box.scrollHeight;},0);
+  return pane;
+}
+
+let globalCtl=null;
+async function askGlobal(){
+  if(globalCtl){ globalCtl.abort(); return; }
+  const q = $("globalInput").value.trim(); if(!q) return;
+  const out=$("globalOut"), txt=$("globalText");
+  out.classList.add("show");
+  if(!sample){ if(sampleChecked) txt.replaceChildren(offNote()); else txt.textContent="Conectando con Claude… vuelve a intentarlo en unos segundos."; return; }
+  txt.textContent="Pensando…"; globalCtl=new AbortController(); $("globalBtn").textContent="Detener";
+  const acts=[]; $("globalOut").querySelectorAll(".send").forEach(n=>n.remove()); const cards=[];
+  try{
+    const {text} = await sample(RULES("La pregunta es sobre el conjunto de proyectos.") + JSON.stringify(snapshot()) + "\n\nPregunta de Oussama: " + q,
+      {cache:false,signal:globalCtl.signal,onText:({text})=>setHTMLSafe(txt,text),tools:makeTools(m=>acts.push(m),(t,pp)=>cards.push(sendCard(t,pp)))});
+    setHTMLSafe(txt,(acts.length?acts.map(a=>"- ✓ "+a).join("\n")+"\n\n":"")+(text||""));
+    cards.forEach(c=>{ c.style.marginTop="12px"; out.append(c); });
+    $("globalInput").value="";
+  }catch(e){ txt.textContent=(e?.text?e.text+"\n\n":"")+errCopy(e); }
+  finally{ globalCtl=null; $("globalBtn").textContent="Preguntar"; }
+}
+
+/* ---------- Dialog ---------- */
+let editing=null;
+function openDialog(p){
+  editing=p||null;
+  $("dlgTitle").textContent = p?"Editar proyecto":"Nuevo proyecto";
+  $("fCat").replaceChildren(...Object.entries(CATS).map(([k,v])=>el("option",{value:k},v.label)));
+  $("fName").value=p?.name||""; $("fCat").value=p?.cat||"juego"; $("fDesc").value=p?.desc||""; $("fLink").value=p?.link||"";
+  $("dlgDelete").hidden=!p;
+  $("dlg").showModal(); $("fName").focus();
+}
+$("dlgCancel").onclick=()=>$("dlg").close();
+$("dlgSave").onclick=()=>{
+  const name=$("fName").value.trim(); if(!name){$("fName").focus();return;}
+  let link=$("fLink").value.trim(); if(link && !/^https?:\/\//i.test(link)) link="https://"+link;
+  if(editing){ Object.assign(editing,{name,cat:$("fCat").value,desc:$("fDesc").value.trim(),link}); }
+  else { const id="p"+uid(); state.projects.push({id,name,cat:$("fCat").value,status:"Activo",desc:$("fDesc").value.trim(),link,tasks:[],notes:""}); selected=id; tab="tareas"; }
+  $("dlg").close(); save(); render(); if(!editing) openMobileDetail();
+};
+$("dlgDelete").onclick=()=>{
+  if(!editing) return;
+  if(!confirm(`¿Eliminar «${editing.name}» y todas sus tareas?`)) return;
+  state.projects=state.projects.filter(x=>x!==editing); delete state.chats[editing.id];
+  selected=state.projects[0]?.id; $("dlg").close(); save(); render();
+};
+$("newBtn").onclick=()=>openDialog(null);
+$("globalBtn").onclick=askGlobal;
+$("globalForm").addEventListener("submit",e=>{e.preventDefault();askGlobal();});
+$("globalClose").onclick=()=>$("globalOut").classList.remove("show");
+
+/* ---------- Theme ---------- */
+function applyTheme(){ if(state.theme) document.documentElement.setAttribute("data-theme",state.theme); else document.documentElement.removeAttribute("data-theme"); }
+$("themeBtn").onclick=()=>{
+  const dark = state.theme ? state.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  state.theme = dark?"light":"dark"; applyTheme(); save();
+};
+
+/* ---------- App instalable (versión GitHub Pages) ---------- */
+if(/github\.io$/.test(location.hostname)){
+  const add=(rel,href)=>{const l=document.createElement("link");l.rel=rel;l.href=href;document.head.append(l);};
+  add("manifest","manifest.json"); add("apple-touch-icon","icon-192.png"); add("icon","icon-192.png");
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+/* ---------- Boot ---------- */
+applyLoaded(loadLocal()); applyTheme(); render();
+
+(async function connect(){
+  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; if(tab==="claude") renderDetail(); return; }
+  try{
+    const [s, d, u, c] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("user"), claude.use("comments")]);
+    sample = s; comments = c; sampleChecked = true;
+    if(d && u){
+      db=d; const id = await u.id();
+      if(id){
+        docRef = db.collection("data/users/"+id).doc("panel");
+        try{
+          const snap = await docRef.get();
+          const data = snap.data && snap.data();
+          if(data && data.json){ const remote = JSON.parse(data.json); if(!state.updatedAt || (remote.updatedAt||0) >= state.updatedAt) applyLoaded(remote); applyTheme(); }
+          else { save(); }
+        }catch(e){ console.warn("db load", e); }
+      }
+    }
+  }catch(e){ sampleChecked=true; }
+  render();
+})();
+})();
+</script>
+</body>
+</html>
