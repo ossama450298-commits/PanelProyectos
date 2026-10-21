@@ -693,7 +693,7 @@ async function unlockToken(pw){
 async function openGh(){
   $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("pwMsg").textContent=""; $("pwIn").value="";
   $("ghDlg").showModal();
-  const b = await getBlob(); $("pwBox").hidden = !b || !!ghToken();
+  const b = await getBlob(); $("pwBox").hidden = !b;
   if(b && !ghToken()) $("pwIn").focus();
 }
 async function doUnlock(){
@@ -723,7 +723,7 @@ function paneChatGh(p){
   const pane = el("div",{class:"pane"});
   if(!ghToken()){
     pane.append(el("p",{class:"off"},"Claude no está abierto aquí. Conéctalo por GitHub y responderá aunque no tengas Claude abierto. ",
-      el("button",{class:"primary",style:"margin-top:8px",onclick:openGh},"Conectar Claude"), " ",
+      el("button",{class:"primary",style:"margin-top:8px",onclick:openGh},"🔑 Entrar con contraseña"), " ",
       el("a",{class:"offlink",href:ARTIFACT_URL,target:"_blank",rel:"noopener"},"o abrir en Claude")));
     return pane;
   }
