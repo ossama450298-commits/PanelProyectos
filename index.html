@@ -540,7 +540,26 @@ function sendCard(text, p){
 /* ---------- Puente con Claude vía GitHub (sin Claude abierto) ---------- */
 const QUEUE = "ossama450298-commits/PanelClaude";
 const GH_KEY = "panel-gh-token";
-const ghToken = () => { try{ return localStorage.getItem(GH_KEY)||""; }catch(e){ return ""; } };
+let memToken = "";
+const ghToken = () => { try{ return localStorage.getItem(GH_KEY) || memToken; }catch(e){ return memToken; } };
+/* El token se guarda en tres sitios (localStorage, IndexedDB y Cache) para que el móvil no lo pierda */
+const TOKEN_URL = new URL("__panel_token__", location.href).href;
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open("panel-proyectos",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbSet(k,v){ try{ const d=await idb(); await new Promise((res,rej)=>{ const t=d.transaction("kv","readwrite"); v==null?t.objectStore("kv").delete(k):t.objectStore("kv").put(v,k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }catch(e){} }
+async function idbGet(k){ try{ const d=await idb(); return await new Promise((res)=>{ const r=d.transaction("kv").objectStore("kv").get(k); r.onsuccess=()=>res(r.result||""); r.onerror=()=>res(""); }); }catch(e){ return ""; } }
+async function persistToken(v){
+  memToken = v || "";
+  try{ v ? localStorage.setItem(GH_KEY, v) : localStorage.removeItem(GH_KEY); }catch(e){}
+  await idbSet(GH_KEY, v || null);
+  try{ if("caches" in window){ const c = await caches.open("panel-token"); v ? await c.put(TOKEN_URL, new Response(v)) : await c.delete(TOKEN_URL); } }catch(e){}
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+}
+async function restoreToken(){
+  if(ghToken()) { persistToken(ghToken()); return; }
+  let v = await idbGet(GH_KEY);
+  if(!v){ try{ if("caches" in window){ const c = await caches.open("panel-token"); const r = await c.match(TOKEN_URL); if(r) v = await r.text(); } }catch(e){} }
+  if(v) await persistToken(v);
+}
 async function gh(path, opts={}){
   const r = await fetch("https://api.github.com"+path, Object.assign({}, opts, {headers:{
     "Authorization":"Bearer "+ghToken(), "Accept":"application/vnd.github+json", "Content-Type":"application/json"}}));
@@ -654,10 +673,10 @@ addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visibl
 function openGh(){ $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("ghDlg").showModal(); }
 $("ghBtn").onclick = openGh;
 $("ghCancel").onclick = ()=>$("ghDlg").close();
-$("ghForget").onclick = ()=>{ try{ localStorage.removeItem(GH_KEY); }catch(e){} $("ghTok").value=""; $("ghMsg").textContent="Token borrado de este dispositivo."; render(); };
+$("ghForget").onclick = async ()=>{ await persistToken(""); $("ghTok").value=""; $("ghMsg").textContent="Token borrado de este dispositivo."; render(); };
 $("ghSave").onclick = async ()=>{
   const v = $("ghTok").value.trim(); if(!v) return;
-  try{ localStorage.setItem(GH_KEY, v); }catch(e){ $("ghMsg").textContent="Este navegador no permite guardar el token."; return; }
+  await persistToken(v);
   $("ghMsg").textContent="Probando…";
   try{ await gh(`/repos/${QUEUE}`); $("ghMsg").textContent="Conectado. Ya puedes hablar con Claude."; ghSyncReady=false; ghSha=null; await ghPull(); render(); setTimeout(()=>$("ghDlg").close(), 900); }
   catch(e){ $("ghMsg").textContent = e.message; }
@@ -826,14 +845,14 @@ if(/github\.io$/.test(location.hostname)){
 /* ---------- Enlace de conexión (#gh=token): guarda el token en este dispositivo y lo borra de la URL ---------- */
 try{
   const m = location.hash.match(/[#&]gh=([A-Za-z0-9_]+)/);
-  if(m){ localStorage.setItem(GH_KEY, m[1]); history.replaceState(null, "", location.pathname + location.search); }
+  if(m){ persistToken(m[1]); history.replaceState(null, "", location.pathname + location.search); }
 }catch(e){}
 
 /* ---------- Boot ---------- */
 applyLoaded(loadLocal()); applyTheme(); render();
 
 (async function connect(){
-  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; render(); ghPull(); return; }
+  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; await restoreToken(); render(); ghPull(); return; }
   try{
     const [s, d, u, c] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("user"), claude.use("comments")]);
     sample = s; comments = c; sampleChecked = true;
@@ -850,7 +869,7 @@ applyLoaded(loadLocal()); applyTheme(); render();
       }
     }
   }catch(e){ sampleChecked=true; }
-  if(!sample){ $("ghBtn").hidden=false; ghPull(); }
+  if(!sample){ $("ghBtn").hidden=false; await restoreToken(); ghPull(); }
   render();
 })();
 })();
