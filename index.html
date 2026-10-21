@@ -251,7 +251,12 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 <dialog id="ghDlg">
   <h3>Conectar Claude por GitHub</h3>
   <p style="margin:0 0 6px;color:var(--muted);font-size:14px">Tus mensajes se envían como issues al repositorio privado <strong>PanelClaude</strong>. Claude los procesa en GitHub Actions aunque no tengas Claude abierto y responde en 1–3 minutos.</p>
-  <label for="ghTok">Token de GitHub (solo PanelClaude → Issues y Contents: lectura y escritura)</label>
+  <div id="pwBox" hidden style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0 6px">
+    <label for="pwIn" style="margin-top:0">Contraseña del panel</label>
+    <input id="pwIn" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="primary" id="pwBtn">Desbloquear</button><span id="pwMsg" class="saved" style="margin:0"></span></div>
+  </div>
+  <label for="ghTok">O pega el token de GitHub (solo PanelClaude → Issues y Contents: lectura y escritura)</label>
   <input id="ghTok" type="password" autocomplete="off" placeholder="github_pat_…">
   <p style="margin:8px 0 0;font-size:13px"><a class="offlink" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token</a></p>
   <p id="ghMsg" class="saved"></p>
@@ -670,7 +675,39 @@ async function ghPush(retry=true){
 function ghSyncSoon(){ if(!ghToken() || sample || !ghSyncReady) return; clearTimeout(ghSyncTimer); syncLabel("Guardando…"); ghSyncTimer = setTimeout(()=>ghPush(), 2500); }
 addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && ghSyncReady && !ghSyncing) ghPull(); });
 
-function openGh(){ $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("ghDlg").showModal(); }
+/* Desbloqueo con contraseña: el token va cifrado (AES-GCM + PBKDF2) en token.enc.json, así funciona hasta en incógnito */
+let encBlob;
+async function getBlob(){
+  if(encBlob !== undefined) return encBlob;
+  try{ const r = await fetch("token.enc.json", {cache:"no-store"}); encBlob = r.ok ? await r.json() : null; }catch(e){ encBlob = null; }
+  return encBlob;
+}
+const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+async function unlockToken(pw){
+  const b = await getBlob(); if(!b) throw new Error("No hay contraseña configurada.");
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:ub64(b.salt), iterations:b.iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  try{ const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:ub64(b.iv)}, key, ub64(b.ct)); return new TextDecoder().decode(pt); }
+  catch(e){ throw new Error("Contraseña incorrecta."); }
+}
+async function openGh(){
+  $("ghTok").value = ghToken(); $("ghMsg").textContent=""; $("pwMsg").textContent=""; $("pwIn").value="";
+  $("ghDlg").showModal();
+  const b = await getBlob(); $("pwBox").hidden = !b || !!ghToken();
+  if(b && !ghToken()) $("pwIn").focus();
+}
+async function doUnlock(){
+  const pw = $("pwIn").value; if(!pw) return;
+  $("pwBtn").disabled = true; $("pwMsg").textContent = "Comprobando…";
+  try{
+    const tok = await unlockToken(pw);
+    await persistToken(tok); $("pwMsg").textContent = "Conectado.";
+    ghSyncReady=false; ghSha=null; await ghPull(); render(); setTimeout(()=>$("ghDlg").close(), 700);
+  }catch(e){ $("pwMsg").textContent = e.message; }
+  finally{ $("pwBtn").disabled = false; }
+}
+$("pwBtn").onclick = doUnlock;
+$("pwIn").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); doUnlock(); } });
 $("ghBtn").onclick = openGh;
 $("ghCancel").onclick = ()=>$("ghDlg").close();
 $("ghForget").onclick = async ()=>{ await persistToken(""); $("ghTok").value=""; $("ghMsg").textContent="Token borrado de este dispositivo."; render(); };
@@ -852,7 +889,7 @@ try{
 applyLoaded(loadLocal()); applyTheme(); render();
 
 (async function connect(){
-  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; await restoreToken(); render(); ghPull(); return; }
+  if(!window.claude || typeof claude.use!=="function"){ sampleChecked=true; $("ghBtn").hidden=false; await restoreToken(); render(); ghPull(); if(!ghToken() && await getBlob()) openGh(); return; }
   try{
     const [s, d, u, c] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("user"), claude.use("comments")]);
     sample = s; comments = c; sampleChecked = true;
@@ -869,7 +906,7 @@ applyLoaded(loadLocal()); applyTheme(); render();
       }
     }
   }catch(e){ sampleChecked=true; }
-  if(!sample){ $("ghBtn").hidden=false; await restoreToken(); ghPull(); }
+  if(!sample){ $("ghBtn").hidden=false; await restoreToken(); ghPull(); if(!ghToken() && await getBlob()) openGh(); }
   render();
 })();
 })();
