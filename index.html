@@ -198,6 +198,8 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .grid.building{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
 @media (max-width:860px){.grid.building{grid-template-columns:1fr}}
 .filters[hidden]{display:none}
+.fwd{align-self:flex-start;margin:-8px 0 0 8px;border:0;background:transparent;color:var(--muted);font-size:12px;padding:2px 4px}
+.fwd:hover{color:var(--accent)}
 .viewsw{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .viewsw button{border:0;background:transparent;padding:4px 10px;font-size:13px;color:var(--muted)}
 .viewsw button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
@@ -295,6 +297,13 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   </div>
 </dialog>
 
+<dialog id="fwdDlg">
+  <h3>Enviar a otro proyecto</h3>
+  <label for="fwdTo">Proyecto de destino</label><select id="fwdTo"></select>
+  <label for="fwdTxt">Mensaje</label><textarea id="fwdTxt" rows="6"></textarea>
+  <div class="row"><button class="ghost" id="fwdCancel">Cancelar</button><span style="flex:1"></span>
+    <button class="ghost" id="fwdNote">Guardar en notas</button><button class="primary" id="fwdChat">Llevar al chat</button></div>
+</dialog>
 <dialog id="ghDlg">
   <h3>Conectar Claude por GitHub</h3>
   <p style="margin:0 0 6px;color:var(--muted);font-size:14px">Tus mensajes se envían como issues al repositorio privado <strong>PanelClaude</strong>. Claude los procesa en GitHub Actions aunque no tengas Claude abierto y responde en 1–3 minutos.</p>
@@ -740,8 +749,9 @@ async function gh(path, opts={}){
   return r.status===204?null:r.json();
 }
 function ghBody(text, pid){
-  const snap = JSON.stringify(snapshot(), null, 0).slice(0, 60000);
-  return `<!-- panel-msg -->\n${text}\n\n<details><summary>Estado del panel${pid?" (proyecto: "+pid+")":""}</summary>\n\n\`\`\`json\n${snap}\n\`\`\`\n</details>`;
+  const snap = JSON.stringify(snapshot(), null, 0).slice(0, 50000);
+  const others = JSON.stringify(otherChats(pid==="general"?null:pid)).slice(0, 12000);
+  return `<!-- panel-msg -->\n${text}\n\n<details><summary>Estado del panel${pid?" (proyecto: "+pid+")":""}</summary>\n\n\`\`\`json\n${snap}\n\`\`\`\n</details>\n\n<details><summary>Conversaciones recientes de otros proyectos</summary>\n\n\`\`\`json\n${others}\n\`\`\`\n</details>`;
 }
 function applyPanelActions(text, notify){
   const acts0=[]; const n0=notify; notify = msg => { acts0.push(msg); };
@@ -897,7 +907,7 @@ function paneChatGh(p){
   }
   const hist = state.chats[p.id] ||= [];
   const box = el("div",{class:"chat","aria-live":"polite"});
-  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); box.scrollTop=box.scrollHeight; return m; };
+  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); if(cls==="bot" && text && text!=="Pensando…") box.append(fwdBtn(p,text)); box.scrollTop=box.scrollHeight; return m; };
   pane.append(el("p",{class:"hint"},"Claude trabaja en GitHub: puede responder, cambiar el panel y subir cambios a tus repos. Tarda 1–3 minutos."));
   for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
   const status = el("div",{class:"msg act",style:"color:var(--muted)","data-working":p.id});
@@ -916,6 +926,7 @@ function paneChatGh(p){
     try{ await ghSend(p.id, `[Panel] ${p.name}`, text); waitReply(); }
     catch(e){ addMsg("err","No se pudo enviar: "+e.message); hist.pop(); save(); sendBtn.disabled=false; }
   }
+  if(drafts[p.id]){ ta.value = drafts[p.id]; delete drafts[p.id]; setTimeout(()=>{ ta.focus(); ta.style.height=Math.min(ta.scrollHeight,160)+"px"; },60); }
   ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
   sendBtn.addEventListener("click",send);
   pane.append(box, el("div",{class:"composer"},ta,el("div",{style:"display:flex;flex-direction:column;gap:6px;align-items:flex-start"},sendBtn,issueLink())));
@@ -923,6 +934,36 @@ function paneChatGh(p){
   setTimeout(()=>{box.scrollTop=box.scrollHeight;},0);
   return pane;
 }
+
+/* ---------- Chats conectados entre proyectos ---------- */
+function otherChats(exceptId){
+  return state.projects.filter(x=>x.id!==exceptId && state.chats[x.id]?.length).map(x=>({
+    proyecto:x.name, id:x.id,
+    mensajes: state.chats[x.id].slice(-6).map(m=>(m.role==="user"?"Oussama: ":"Claude: ")+String(m.content).slice(0,350))
+  }));
+}
+const drafts = {};
+let fwdFrom = null;
+function fwdBtn(p, text){
+  return el("button",{class:"fwd",title:"Enviar este mensaje a otro proyecto",onclick:()=>openFwd(p,text)},"↪ Enviar a otro proyecto");
+}
+function openFwd(p, text){
+  fwdFrom = p;
+  $("fwdTo").replaceChildren(...state.projects.filter(x=>x.id!==p.id).map(x=>el("option",{value:x.id},x.name)));
+  $("fwdTxt").value = `Desde ${p.name}:\n${text}`;
+  $("fwdDlg").showModal();
+}
+$("fwdCancel").onclick = ()=>$("fwdDlg").close();
+$("fwdNote").onclick = ()=>{
+  const t = proj($("fwdTo").value), v = $("fwdTxt").value.trim(); if(!t||!v) return;
+  t.notes = ((t.notes||"").trim()+"\n\n"+v).trim(); save(); $("fwdDlg").close();
+  selected=t.id; tab="notas"; render(); openMobileDetail();
+};
+$("fwdChat").onclick = ()=>{
+  const t = proj($("fwdTo").value), v = $("fwdTxt").value.trim(); if(!t||!v) return;
+  drafts[t.id] = v; $("fwdDlg").close();
+  selected=t.id; tab="claude"; seen(t.id); render(); openMobileDetail();
+};
 
 let chatCtl = null;
 function paneChat(p){
@@ -934,13 +975,14 @@ function paneChat(p){
   }
   const hist = state.chats[p.id] ||= [];
   const box = el("div",{class:"chat","aria-live":"polite"});
-  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); box.scrollTop=box.scrollHeight; return m; };
+  const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); if(cls==="bot" && text && text!=="Pensando…") box.append(fwdBtn(p,text)); box.scrollTop=box.scrollHeight; return m; };
   if(!hist.length) pane.append(el("p",{class:"hint"},`Claude ve las tareas, notas y estado de ${p.name} y puede cambiarlos por ti.`));
   for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
   const sugg = el("div",{class:"sugg"}, ["¿Qué hago ahora?","Divide la primera tarea en pasos","Propón 3 tareas nuevas","Resume el estado del proyecto"].map(s=>el("button",{onclick:()=>{ta.value=s;send();}},s)));
   const ta = el("textarea",{placeholder:"Escribe a Claude… (Enter para enviar)","aria-label":"Mensaje para Claude"});
   const sendBtn = el("button",{class:"primary"},"Enviar");
   const clearBtn = el("button",{class:"ghost",title:"Borrar conversación",onclick:()=>{ state.chats[p.id]=[]; save(); renderDetail(); }},"Limpiar");
+  if(drafts[p.id]){ ta.value = drafts[p.id]; delete drafts[p.id]; setTimeout(()=>{ ta.focus(); ta.style.height=Math.min(ta.scrollHeight,160)+"px"; },60); }
   ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
   ta.addEventListener("input",()=>{ta.style.height="46px";ta.style.height=Math.min(ta.scrollHeight,160)+"px";});
   async function send(){
@@ -951,7 +993,7 @@ function paneChat(p){
     const bubble = addMsg("bot","Pensando…");
     setChatStatus(p.id,"working"); save(); renderList();
     chatCtl = new AbortController(); sendBtn.textContent="Detener"; const pending=[];
-    const turns = [{role:"user",content: RULES(`Ahora estáis hablando del proyecto «${p.name}» (id: ${p.id}). Céntrate en él salvo que pregunte por otro.`) + JSON.stringify(snapshot())},
+    const turns = [{role:"user",content: RULES(`Ahora estáis hablando del proyecto «${p.name}» (id: ${p.id}). Céntrate en él salvo que pregunte por otro.`) + JSON.stringify(snapshot()) + "\n\nConversaciones recientes en OTROS proyectos (contexto compartido; úsalo si Oussama se refiere a ellos):\n" + JSON.stringify(otherChats(p.id))},
                    {role:"assistant",content:"Entendido. Tengo el estado del panel."}, ...hist.slice(-16)];
     try{
       const {text:ans} = await sample(turns,{cache:false,signal:chatCtl.signal,
@@ -960,7 +1002,7 @@ function paneChat(p){
                          (txt,pp)=>{ pending.push(sendCard(txt, pp||p)); })});
       pending.forEach(c=>{ box.append(c); }); pending.length=0; box.scrollTop=box.scrollHeight;
       const sp = splitNeeds(ans||"(sin respuesta)");
-      setHTMLSafe(bubble, sp.text);
+      setHTMLSafe(bubble, sp.text); bubble.after(fwdBtn(p, sp.text));
       hist.push({role:"assistant",content:sp.text}); setChatStatus(p.id, sp.needs?"needs":"done"); save(); renderList();
     }catch(e){
       if(e?.text){ setHTMLSafe(bubble,e.text); hist.push({role:"assistant",content:e.text}); save(); } else bubble.remove();
@@ -995,7 +1037,7 @@ async function askGlobal(){
   txt.textContent="Pensando…"; globalCtl=new AbortController(); $("globalBtn").textContent="Detener";
   const acts=[]; $("globalOut").querySelectorAll(".send").forEach(n=>n.remove()); const cards=[];
   try{
-    const {text} = await sample(RULES("La pregunta es sobre el conjunto de proyectos.") + JSON.stringify(snapshot()) + "\n\nPregunta de Oussama: " + q,
+    const {text} = await sample(RULES("La pregunta es sobre el conjunto de proyectos.") + JSON.stringify(snapshot()) + "\n\nConversaciones recientes de cada proyecto:\n" + JSON.stringify(otherChats(null)) + "\n\nPregunta de Oussama: " + q,
       {cache:false,signal:globalCtl.signal,onText:({text})=>setHTMLSafe(txt,text),tools:makeTools(m=>acts.push(m),(t,pp)=>cards.push(sendCard(t,pp)))});
     setHTMLSafe(txt,(acts.length?acts.map(a=>"- ✓ "+a).join("\n")+"\n\n":"")+(text||""));
     cards.forEach(c=>{ c.style.marginTop="12px"; out.append(c); });
