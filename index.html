@@ -15,7 +15,7 @@
 <style>
 :root{
   --bg:#EDF0F5; --panel:#FFFFFF; --panel2:#F6F8FB; --ink:#1B2340; --muted:#5B6480; --line:#D7DCE6;
-  --accent:#2F54EB; --accent-ink:#FFFFFF; --ok:#13875F; --warn:#B7791F; --bad:#C2352B;
+  --accent:#2F54EB; --accent-ink:#FFFFFF; --ok:#13875F; --warn:#B7791F; --bad:#C2352B; --blue:#2F6FED;
   --c-juego:#7A3FF2; --c-escuela:#0E9F8A; --c-trabajo:#B7791F; --c-auto:#2F7DD1; --c-web:#D23F7E;
   --user-bubble:#2F54EB; --user-ink:#fff; --bot-bubble:#F1F3F8;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -27,7 +27,7 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
-    --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F;
+    --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F; --blue:#6F9BFF;
     --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
     --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
     color-scheme: dark;
@@ -35,7 +35,7 @@
 }
 :root[data-theme="dark"]{
   --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
-  --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F;
+  --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F; --blue:#6F9BFF;
   --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
   --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
   color-scheme: dark;
@@ -83,6 +83,16 @@ button{cursor:pointer}
 .proj:hover{background:var(--panel2)}
 .proj[aria-current="true"]{background:var(--panel2)}
 .proj .bar{height:100%;min-height:38px;border-radius:0 4px 4px 0;background:var(--cat)}
+.proj.st-working{--st:var(--blue)} .proj.st-needs{--st:var(--bad)} .proj.st-done{--st:var(--ok)}
+.proj[class*="st-"]{background:color-mix(in srgb, var(--st) 13%, transparent)}
+.proj[class*="st-"] .bar{background:var(--st)}
+.proj[class*="st-"]:hover,.proj[class*="st-"][aria-current="true"]{background:color-mix(in srgb, var(--st) 20%, transparent)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--st);margin-top:3px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--st);display:inline-block}
+.st-working .badge i{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:2px 10px 10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .proj .name{font-weight:600;line-height:1.25}
 .proj .sub{font-size:13px;color:var(--muted)}
 .ring{--p:0;width:34px;height:34px;border-radius:50%;background:conic-gradient(var(--cat) calc(var(--p)*1%), var(--line) 0);display:grid;place-items:center}
@@ -215,6 +225,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
     <nav class="list" aria-label="Proyectos">
       <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
       <div class="filters" id="filters"></div>
+      <div class="legend" id="legend" hidden><span><i style="background:var(--blue)"></i>Trabajando</span><span><i style="background:var(--bad)"></i>Te necesita</span><span><i style="background:var(--ok)"></i>Terminado</span></div>
       <div id="projList"></div>
     </nav>
 
@@ -387,15 +398,19 @@ function renderList(){
   const items = state.projects.filter(p=>filter==="todos"||p.cat===filter);
   for(const p of items){
     const open = p.tasks.filter(t=>!t.done).length, v = pct(p);
-    const b = el("button",{class:"proj","aria-current":String(p.id===selected),style:`--cat:${CATS[p.cat]?.color||"var(--accent)"}`,
-      onclick:()=>{selected=p.id;renderList();renderDetail(); openMobileDetail();}},
+    const cs = state.chatStatus?.[p.id];
+    const STL = {working:"Claude trabajando…", needs:"Claude te necesita", done:"Claude ha terminado"};
+    const b = el("button",{class:"proj"+(cs?" st-"+cs:""),"aria-current":String(p.id===selected),style:`--cat:${CATS[p.cat]?.color||"var(--accent)"}`,
+      onclick:()=>{selected=p.id; if(tab==="claude") seen(p.id); renderList();renderDetail(); openMobileDetail();}},
       el("span",{class:"bar"}),
-      el("span",{}, el("div",{class:"name"},p.name), el("div",{class:"sub"},`${p.status} · ${open} pendiente${open===1?"":"s"}`)),
+      el("span",{}, el("div",{class:"name"},p.name), el("div",{class:"sub"},`${p.status} · ${open} pendiente${open===1?"":"s"}`),
+        cs ? el("div",{class:"badge"}, el("i"), STL[cs]) : null),
       el("span",{class:"ring",style:`--p:${v}`,title:`${v}% completado`}, el("span",{},v+"%"))
     );
     L.append(b);
   }
   if(!items.length) L.append(el("div",{class:"empty"},"No hay proyectos en esta categoría."));
+  $("legend").hidden = !Object.keys(state.chatStatus||{}).length;
 }
 function renderDetail(){
   const D = $("detail"); D.replaceChildren();
@@ -414,7 +429,7 @@ function renderDetail(){
       el("button",{class:"ghost",onclick:()=>openDialog(p)},"Editar"))
   ));
   const tabs = [["tareas",`Tareas (${p.tasks.filter(t=>!t.done).length})`],["claude","Hablar con Claude"],["notas","Notas"]];
-  D.append(el("div",{class:"tabs",role:"tablist"}, tabs.map(([k,l])=>el("button",{class:"tab",role:"tab","aria-selected":String(tab===k),onclick:()=>{tab=k;renderDetail();}},l))));
+  D.append(el("div",{class:"tabs",role:"tablist"}, tabs.map(([k,l])=>el("button",{class:"tab",role:"tab","aria-selected":String(tab===k),onclick:()=>{tab=k; if(k==="claude") seen(p.id); renderDetail();}},l))));
   if(tab==="tareas") D.append(paneTasks(p));
   if(tab==="notas") D.append(paneNotes(p));
   if(tab==="claude") D.append(paneChat(p));
@@ -451,6 +466,7 @@ function snapshot(onlyId){
 }
 const RULES = (scopeTxt) => `Eres Claude, el asistente del panel de proyectos personal de Oussama (Barcelona; trabaja en contabilidad en PauTravelMoto y estudia/participa en el CFGS Administració i Finances). Responde siempre en español, de forma concisa y directa, sin relleno.
 Puedes GESTIONAR el panel con las herramientas: crear, completar o borrar tareas, cambiar estados, añadir notas y crear proyectos. Úsalas cuando te lo pida o cuando sea claramente lo que quiere; después resume en una frase lo que cambiaste. No inventes datos que no estén en el panel.
+Si necesitas que Oussama te responda o decida algo antes de poder seguir, termina tu respuesta con la línea [NECESITA-RESPUESTA]. Si has terminado, no la pongas.
 Desde aquí no puedes tocar GitHub, enviar correos, editar los archivos de los juegos ni nada fuera del panel. Cuando te pida algo así, llama a la herramienta enviar_al_chat con la petición redactada de forma completa y autosuficiente (qué proyecto, qué hay que hacer exactamente, repositorio si lo hay y cualquier detalle que haya dado), y dile en una frase que pulse «Enviar al chat» para que Claude lo haga desde el chat. No digas que ya está hecho.
 ${scopeTxt}
 Estado actual del panel (JSON):
@@ -560,27 +576,42 @@ async function ghSend(key, title, text){
   let sentAt;
   if(num){ const c = await gh(`/repos/${QUEUE}/issues/${num}/comments`,{method:"POST",body:JSON.stringify({body})}); sentAt=c.created_at; }
   else { const i = await gh(`/repos/${QUEUE}/issues`,{method:"POST",body:JSON.stringify({title,body})}); num=i.number; state.ghIssues[key]=num; sentAt=i.created_at; }
-  state.ghPending ||= {}; state.ghPending[key] = sentAt; save();
+  state.ghPending ||= {}; state.ghPending[key] = sentAt; if(key!=="general") setChatStatus(key,"working"); save(); renderList();
   return num;
 }
-function ghWait(key, onDone, onTick){
-  if(polls[key]) clearTimeout(polls[key]);
-  const num = state.ghIssues?.[key], since = state.ghPending?.[key];
-  if(!num || !since) return;
-  const start = Date.now();
-  const tick = async () => {
-    try{
-      const cs = await gh(`/repos/${QUEUE}/issues/${num}/comments?since=${encodeURIComponent(since)}&per_page=100`);
-      const r = cs.filter(c=>c.body && c.body.includes("claude-reply") && c.created_at >= since).pop();
-      if(r){ delete state.ghPending[key]; save(); polls[key]=null; onDone(cleanReply(r.body)); return; }
-    }catch(e){ onTick && onTick("Error consultando GitHub: "+e.message); }
-    const mins = Math.floor((Date.now()-start)/60000);
-    onTick && onTick(mins<1 ? "Claude está trabajando en GitHub… suele tardar 1–3 minutos." : `Claude sigue trabajando (${mins} min)…`);
-    if(Date.now()-start < 45*60000) polls[key] = setTimeout(tick, 12000);
-    else { onTick && onTick("Sin respuesta todavía. Revisa la pestaña Actions de PanelClaude."); polls[key]=null; }
-  };
-  polls[key] = setTimeout(tick, 8000);
+const NEEDS_RE = /\[\s*NECESITA[-_ ]RESPUESTA\s*\]/gi;
+function setChatStatus(pid, s){ state.chatStatus ||= {}; if(s) state.chatStatus[pid]=s; else delete state.chatStatus[pid]; }
+function seen(pid){ if(state.chatStatus?.[pid]==="done"){ setChatStatus(pid,null); save(); renderList(); } }
+function splitNeeds(t){ const needs = NEEDS_RE.test(t); NEEDS_RE.lastIndex=0; return {needs, text:String(t).replace(NEEDS_RE,"").trim()}; }
+function handleReply(key, raw){
+  const {needs, text} = splitNeeds(applyPanelActions(raw, ()=>{}));
+  if(key==="general"){ state.globalLast=text; const g=$("globalText"); delete g.dataset.working; if($("globalOut").classList.contains("show")) setHTMLSafe(g, text); }
+  else { (state.chats[key] ||= []).push({role:"assistant",content:text}); setChatStatus(key, needs?"needs":"done"); }
+  save(); render();
 }
+function workingText(key){ const s=state.ghPending?.[key]; if(!s) return ""; const m=Math.floor((Date.now()-Date.parse(s))/60000); return m<1?"Claude está trabajando en GitHub… suele tardar 1–3 minutos.":`Claude sigue trabajando (${m} min)…`; }
+function updateWorkingLabels(){ document.querySelectorAll("[data-working]").forEach(n=>{ const t=workingText(n.dataset.working); if(t) n.textContent=t; }); }
+let pollTimer=null, polling=false;
+async function pollAll(){
+  clearTimeout(pollTimer);
+  if(polling || !ghToken() || sample) return;
+  polling=true;
+  try{
+    for(const [key, since] of Object.entries(state.ghPending||{})){
+      const num = state.ghIssues?.[key];
+      if(!num){ delete state.ghPending[key]; continue; }
+      try{
+        const cs = await gh(`/repos/${QUEUE}/issues/${num}/comments?since=${encodeURIComponent(since)}&per_page=100`);
+        const r = cs.filter(c=>c.body && c.body.includes("claude-reply") && c.created_at >= since).pop();
+        if(r){ delete state.ghPending[key]; handleReply(key, cleanReply(r.body)); }
+        else if(Date.now()-Date.parse(since) > 60*60000){ delete state.ghPending[key]; handleReply(key, "No ha llegado respuesta en una hora. Revisa la pestaña Actions de PanelClaude. [NECESITA-RESPUESTA]"); }
+      }catch(e){}
+    }
+  }finally{ polling=false; }
+  updateWorkingLabels();
+  if(Object.keys(state.ghPending||{}).length) pollTimer=setTimeout(pollAll, 12000);
+}
+function ghWait(){ clearTimeout(pollTimer); pollTimer=setTimeout(pollAll, 8000); }
 /* Sincronización entre dispositivos: el estado vive en PanelClaude/panel-state.json */
 const STATE_PATH = `/repos/${QUEUE}/contents/panel-state.json`;
 let ghSha = null, ghSyncTimer = null, ghSyncing = false, ghSyncReady = false;
@@ -601,6 +632,7 @@ async function ghPull(){
   }
   ghSyncReady = true;
   if(!ghSha) ghPush();
+  ghWait();
 }
 async function ghPush(retry=true){
   if(!ghToken() || sample || !ghSyncReady) return;
@@ -644,17 +676,14 @@ function paneChatGh(p){
   const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); box.scrollTop=box.scrollHeight; return m; };
   pane.append(el("p",{class:"hint"},"Claude trabaja en GitHub: puede responder, cambiar el panel y subir cambios a tus repos. Tarda 1–3 minutos."));
   for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
-  const status = el("div",{class:"msg act",style:"color:var(--muted)"});
+  const status = el("div",{class:"msg act",style:"color:var(--muted)","data-working":p.id});
   const ta = el("textarea",{placeholder:"Escribe a Claude… (Enter para enviar)","aria-label":"Mensaje para Claude"});
   const sendBtn = el("button",{class:"primary"},"Enviar");
   const issueLink = () => state.ghIssues?.[p.id] ? el("a",{class:"offlink",style:"font-size:13px",href:`https://github.com/${QUEUE}/issues/${state.ghIssues[p.id]}`,target:"_blank",rel:"noopener"},"Ver en GitHub") : null;
   const busy = () => !!state.ghPending?.[p.id];
   const waitReply = () => {
-    sendBtn.disabled = true; box.append(status); status.textContent="Claude está trabajando en GitHub…";
-    ghWait(p.id, (text)=>{
-      const shown = applyPanelActions(text, ()=>{});
-      hist.push({role:"assistant",content:shown}); save(); render();
-    }, (t)=>{ status.textContent=t; });
+    sendBtn.disabled = true; box.append(status); status.textContent = workingText(p.id) || "Claude está trabajando en GitHub…";
+    ghWait();
   };
   async function send(){
     const text = ta.value.trim(); if(!text || busy()) return;
@@ -696,21 +725,24 @@ function paneChat(p){
     ta.value=""; addMsg("user",text);
     hist.push({role:"user",content:text}); save();
     const bubble = addMsg("bot","Pensando…");
+    setChatStatus(p.id,"working"); save(); renderList();
     chatCtl = new AbortController(); sendBtn.textContent="Detener"; const pending=[];
     const turns = [{role:"user",content: RULES(`Ahora estáis hablando del proyecto «${p.name}» (id: ${p.id}). Céntrate en él salvo que pregunte por otro.`) + JSON.stringify(snapshot())},
                    {role:"assistant",content:"Entendido. Tengo el estado del panel."}, ...hist.slice(-16)];
     try{
       const {text:ans} = await sample(turns,{cache:false,signal:chatCtl.signal,
-        onText:({text})=>{ setHTMLSafe(bubble,text); box.scrollTop=box.scrollHeight; },
+        onText:({text})=>{ setHTMLSafe(bubble,splitNeeds(text).text); box.scrollTop=box.scrollHeight; },
         tools: makeTools(msg=>{ const a=el("div",{class:"msg act"},"✓ "+msg); box.insertBefore(a,bubble); },
                          (txt,pp)=>{ pending.push(sendCard(txt, pp||p)); })});
       pending.forEach(c=>{ box.append(c); }); pending.length=0; box.scrollTop=box.scrollHeight;
-      setHTMLSafe(bubble, ans||"(sin respuesta)");
-      hist.push({role:"assistant",content:ans||"(sin respuesta)"}); save();
+      const sp = splitNeeds(ans||"(sin respuesta)");
+      setHTMLSafe(bubble, sp.text);
+      hist.push({role:"assistant",content:sp.text}); setChatStatus(p.id, sp.needs?"needs":"done"); save(); renderList();
     }catch(e){
       if(e?.text){ setHTMLSafe(bubble,e.text); hist.push({role:"assistant",content:e.text}); save(); } else bubble.remove();
       addMsg("err", errCopy(e));
       if(hist.length && hist[hist.length-1].role==="user") hist.pop();
+      setChatStatus(p.id, null); save(); renderList();
     }finally{ chatCtl=null; sendBtn.textContent="Enviar"; if(tab==="claude"&&selected===p.id) ta.focus(); }
   }
   sendBtn.addEventListener("click",send);
@@ -732,7 +764,7 @@ async function askGlobal(){
     txt.textContent="Enviando a Claude…";
     try{
       await ghSend("general","[Panel] General",q); $("globalInput").value="";
-      ghWait("general",(t)=>{ const s=applyPanelActions(t,()=>{}); render(); setHTMLSafe(txt,s); }, (m)=>{ txt.textContent=m; });
+      txt.dataset.working="general"; txt.textContent=workingText("general"); ghWait();
     }catch(e){ txt.textContent="No se pudo enviar: "+e.message; }
     return;
   }
