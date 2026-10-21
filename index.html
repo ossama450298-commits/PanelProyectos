@@ -194,6 +194,53 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   .primary,.ghost{min-height:42px}
   dialog{margin:auto 0 0;width:100vw;max-width:100vw;border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Vista edificio ---------- */
+.grid.building{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+@media (max-width:860px){.grid.building{grid-template-columns:1fr}}
+.filters[hidden]{display:none}
+.viewsw{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.viewsw button{border:0;background:transparent;padding:4px 10px;font-size:13px;color:var(--muted)}
+.viewsw button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.bld{margin:2px 4px 6px}
+.bld svg{display:block;width:100%;height:auto}
+.floors{display:grid;grid-template-columns:1fr 1fr;background:#8E4B36;border:6px solid #5E2F22;border-top:0;border-bottom:0;gap:5px;padding:5px}
+.room{position:relative;border:0;padding:0;margin:0;cursor:pointer;aspect-ratio:4/3;overflow:hidden;background:#3a2a24;border-radius:3px;box-shadow:inset 0 0 0 2px #5E2F22}
+.room svg{width:100%;height:100%}
+.room:hover{filter:brightness(1.06)}
+.room[aria-current="true"]{box-shadow:0 0 0 3px var(--accent), inset 0 0 0 2px #5E2F22;z-index:1}
+.plate{position:absolute;left:5px;right:5px;top:5px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;pointer-events:none}
+.plate b{font:700 12px/1.15 var(--display);background:rgba(255,253,246,.92);color:#1B2340;border-radius:5px;padding:2px 6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.plate .badge{background:rgba(255,253,246,.92);border-radius:5px;padding:1px 6px;margin:0;font-size:11px}
+.room.st-working{--st:var(--blue)} .room.st-needs{--st:var(--bad)} .room.st-done{--st:var(--ok)}
+.room[class*="st-"]{box-shadow:0 0 0 3px var(--st), inset 0 0 0 2px #5E2F22}
+.room[class*="st-"][aria-current="true"]{box-shadow:0 0 0 3px var(--st), 0 0 0 6px var(--accent)}
+@media (max-width:420px){.plate b{font-size:11px}.plate .badge{font-size:10px}}
+/* animaciones de los personajes */
+.room .a{transform-box:fill-box}
+.arm-type{transform-origin:50% 0;animation:type .32s ease-in-out infinite}
+.arm-type.b{animation-delay:.16s}
+.walker{animation:walk 7s ease-in-out infinite}
+.leg1{transform-origin:50% 0;animation:leg .5s ease-in-out infinite}
+.leg2{transform-origin:50% 0;animation:leg .5s ease-in-out infinite reverse}
+.bob{animation:bob .9s ease-in-out infinite}
+.wave{transform-origin:50% 0;animation:wave .6s ease-in-out infinite}
+.zz{animation:zz 2.6s ease-in infinite}.zz.b{animation-delay:1.3s}
+.blink{animation:blink 1s steps(2,start) infinite}
+.flick{animation:flick 1.6s linear infinite}
+.steam{animation:zz 2.2s ease-in infinite}
+.led{animation:blink .7s steps(2,start) infinite}.led.b{animation-delay:.35s}
+.pop{transform-origin:50% 100%;animation:pop 1.4s ease-in-out infinite}
+@keyframes type{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(10deg)}}
+@keyframes walk{0%{transform:translateX(0)}45%{transform:translateX(64px)}55%{transform:translateX(64px)}100%{transform:translateX(0)}}
+@keyframes leg{0%,100%{transform:rotate(22deg)}50%{transform:rotate(-22deg)}}
+@keyframes bob{50%{transform:translateY(-2.5px)}}
+@keyframes wave{0%,100%{transform:rotate(-160deg)}50%{transform:rotate(-125deg)}}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}25%{opacity:1}100%{opacity:0;transform:translate(9px,-22px)}}
+@keyframes blink{50%{opacity:.2}}
+@keyframes flick{0%,100%{opacity:1}40%{opacity:.75}45%{opacity:1}70%{opacity:.85}}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.room *{animation:none!important}}
+
 @media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
 </style>
 </head>
@@ -223,7 +270,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 
   <div class="grid">
     <nav class="list" aria-label="Proyectos">
-      <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
+      <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span class="viewsw" id="viewSw"><button data-v="edificio">Edificio</button><button data-v="lista">Lista</button></span><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
       <div class="filters" id="filters"></div>
       <div class="legend" id="legend" hidden><span><i style="background:var(--blue)"></i>Trabajando</span><span><i style="background:var(--bad)"></i>Te necesita</span><span><i style="background:var(--ok)"></i>Terminado</span></div>
       <div id="projList"></div>
@@ -398,8 +445,129 @@ function renderFilters(){
     f.append(el("button",{class:"chip","aria-pressed":String(filter===k),onclick:()=>{filter=k;renderFilters();renderList();}},label));
   }
 }
+/* ---------- Vista edificio: cada piso es un proyecto ---------- */
+const SKINS=["#F2C9A0","#D9A27A","#B9805A","#F5D3B3","#8D5A3B"], HAIR=["#2B1D14","#5A3A22","#1B1B1B","#8A5A2B","#3B2A20"];
+const SHIRTS=["#2F54EB","#0E9F8A","#7A3FF2","#E07A1F","#D23F7E","#2F7DD1","#13875F","#B7791F"];
+const WALLS={juego:["#3B3364","#463D78"],escuela:["#E6F0E8","#D4E6D9"],trabajo:["#F4E7CF","#EAD8B6"],auto:["#DDE7F3","#C9D8EC"],web:["#F6E1EA","#EBCAD8"]};
+function hashN(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); }
+function person(x,y,o){
+  // y = parte superior de la cabeza; figura de ~50px de alto
+  const legs = o.walk
+    ? `<g class="a leg1"><rect x="-6" y="31" width="5" height="18" rx="2.5" fill="#2B2F45"/></g><g class="a leg2"><rect x="1" y="31" width="5" height="18" rx="2.5" fill="#2B2F45"/></g>`
+    : (o.legs===false ? "" : `<rect x="-6" y="31" width="5" height="18" rx="2.5" fill="#2B2F45"/><rect x="1" y="31" width="5" height="18" rx="2.5" fill="#2B2F45"/>`);
+  const arm = (side, cls, rot) => `<g transform="translate(${side*9},12)${rot?` rotate(${rot})`:""}"><g class="a ${cls||""}"><rect x="-2.5" y="0" width="5" height="17" rx="2.5" fill="${o.shirt}"/><circle cx="0" cy="17" r="2.8" fill="${o.skin}"/></g></g>`;
+  const head = o.sleep
+    ? `<g transform="translate(4,6) rotate(70)"><circle r="8.5" fill="${o.skin}"/><path d="M-8.5,-1 A8.5,8.5 0 0 1 8.5,-1 Z" fill="${o.hair}"/></g>`
+    : `<g transform="translate(0,9)"><circle r="8.5" fill="${o.skin}"/><path d="M-8.6,-1 A8.6,8.6 0 0 1 8.6,-1 L8.6,-3 Q0,-6 -8.6,-3 Z" fill="${o.hair}"/><circle cx="-3" cy="1" r="1.1" fill="#1B2340"/><circle cx="3" cy="1" r="1.1" fill="#1B2340"/><path d="M-3,4.5 Q0,${o.happy?7.5:6} 3,4.5" stroke="#1B2340" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>`;
+  return `<g transform="translate(${x},${y})"><g class="${o.bob?"a bob":""}">${legs}<rect x="-9" y="16" width="18" height="18" rx="6" fill="${o.shirt}"/>${arm(-1,o.armL,o.rotL)}${arm(1,o.armR,o.rotR)}${head}${o.extra||""}</g></g>`;
+}
+function deskProp(cat, st){
+  const glow = st==="working" ? ` class="flick"` : "";
+  const screen = (x,y,w,h,inner) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#1B2340"/><g${glow}><rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="${st==="idle"?"#2C3552":"#8FD3FF"}"/>${st==="idle"?"":inner}</g><rect x="${x+w/2-2}" y="${y+h}" width="4" height="5" fill="#1B2340"/>`;
+  if(cat==="juego") return screen(146,72,36,24,`<rect x="156" y="80" width="4" height="4" fill="#7A3FF2"/><rect x="164" y="80" width="4" height="4" fill="#7A3FF2"/><rect x="152" y="86" width="20" height="3" fill="#13875F"/>`)+`<rect x="132" y="94" width="10" height="4" rx="2" fill="#C2352B"/>`;
+  if(cat==="escuela") return `<rect x="150" y="84" width="26" height="5" fill="#2F54EB"/><rect x="152" y="79" width="22" height="5" fill="#0E9F8A"/><rect x="149" y="74" width="24" height="5" fill="#E07A1F"/>`;
+  if(cat==="trabajo") return `<rect x="150" y="80" width="20" height="18" fill="#FFFFFF" stroke="#C9CED9"/><rect x="152" y="76" width="20" height="18" fill="#FFFFFF" stroke="#C9CED9"/><path d="M155 81h14M155 85h14M155 89h10" stroke="#9AA3BF" stroke-width="1"/><rect x="134" y="88" width="12" height="10" rx="1.5" fill="#5B6480"/><rect x="136" y="90" width="8" height="2.5" fill="#B9F6CA"/>`;
+  if(cat==="auto") return screen(148,72,34,24,`<path d="M152 79h10M152 84h16M152 89h7" stroke="#13875F" stroke-width="2"/>`);
+  return screen(146,70,38,26,`<rect x="150" y="74" width="30" height="4" fill="#D23F7E"/><rect x="150" y="81" width="18" height="10" fill="#FFFFFF"/><rect x="170" y="81" width="10" height="10" fill="#F5C2D6"/>`);
+}
+function wallProp(cat, st){
+  if(cat==="escuela") return `<rect x="66" y="26" width="58" height="34" rx="2" fill="#2E5E4E" stroke="#8B5E3C" stroke-width="3"/><text x="95" y="48" text-anchor="middle" font-family="Comic Sans MS, Chalkboard SE, cursive" font-size="13" fill="#F4F1E8">AF2 ✎</text>`;
+  if(cat==="trabajo") return `<rect x="66" y="64" width="26" height="64" fill="#9AA3BF"/><rect x="69" y="68" width="20" height="17" fill="#B9C1D6"/><rect x="69" y="88" width="20" height="17" fill="#B9C1D6"/><rect x="69" y="108" width="20" height="17" fill="#B9C1D6"/><rect x="76" y="75" width="6" height="2" fill="#5B6480"/><rect x="76" y="95" width="6" height="2" fill="#5B6480"/><rect x="76" y="115" width="6" height="2" fill="#5B6480"/><rect x="98" y="30" width="26" height="20" fill="#FFFFFF" stroke="#C9CED9"/><path d="M101 44l5-6 5 3 6-8" stroke="#13875F" stroke-width="2" fill="none"/>`;
+  if(cat==="auto"){ const on = st!=="idle"; return `<rect x="66" y="56" width="28" height="72" rx="2" fill="#2B2F45"/>${[0,1,2,3,4].map(i=>`<rect x="70" y="${61+i*13}" width="20" height="9" fill="#3D4463"/><circle cx="86" cy="${65.5+i*13}" r="1.8" fill="${on?"#3CC48E":"#5B6480"}" ${on?`class="a led${i%2?" b":""}"`:""}/>`).join("")}`; }
+  if(cat==="web") return `<rect x="66" y="24" width="60" height="38" rx="3" fill="#FFFFFF" stroke="#D23F7E" stroke-width="2"/><rect x="66" y="24" width="60" height="7" rx="3" fill="#D23F7E"/><circle cx="71" cy="27.5" r="1.4" fill="#fff"/><circle cx="76" cy="27.5" r="1.4" fill="#fff"/><rect x="71" y="36" width="26" height="4" fill="#EBCAD8"/><rect x="71" y="44" width="50" height="3" fill="#EBCAD8"/><rect x="71" y="50" width="40" height="3" fill="#EBCAD8"/>`;
+  return `<rect x="70" y="28" width="44" height="30" rx="2" fill="#1B1640" stroke="#A57CFF" stroke-width="2"/><path d="M80 50l6-12 6 8 5-5 7 9z" fill="#A57CFF"/><circle cx="104" cy="36" r="3" fill="#FFD166"/>`;
+}
+function roomSVG(p, i){
+  const st = state.chatStatus?.[p.id] || "idle";
+  const [w1,w2] = WALLS[p.cat] || WALLS.web;
+  const h = hashN(p.id), skin=SKINS[h%5], hair=HAIR[(h>>3)%5], shirt=SHIRTS[i%SHIRTS.length], shirt2=SHIRTS[(i+3)%SHIRTS.length];
+  const lampCol = st==="needs" ? "#FF5A4E" : st==="working" ? "#FFE48A" : st==="done" ? "#7CF0B5" : "#E8E2CC";
+  const night = p.cat==="juego" ? "#24305C" : "#9FD3F5";
+  let s = `<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><pattern id="wp${i}" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${w1}"/><rect width="6" height="12" fill="${w2}" opacity=".55"/></pattern></defs>
+  <rect width="200" height="150" fill="url(#wp${i})"/>
+  <rect x="12" y="28" width="44" height="50" fill="${night}" stroke="#FFFFFF" stroke-width="4"/><path d="M34 28v50M12 53h44" stroke="#FFFFFF" stroke-width="3"/>
+  <rect x="8" y="76" width="52" height="5" fill="#E9E2D0"/>
+  <rect y="128" width="200" height="22" fill="#A8744F"/><path d="M0 128h200" stroke="#7A5136" stroke-width="2"/>${[0,1,2,3,4,5,6].map(k=>`<path d="M${k*32+10} 128v22" stroke="#8E6142" stroke-width="1"/>`).join("")}
+  <path d="M120 0v14" stroke="#4A4A4A" stroke-width="1.5"/><path d="M112 14h16l-3 7h-10z" fill="#4A4A4A"/><circle cx="120" cy="24" r="4.5" fill="${lampCol}" ${st==="needs"?`class="a blink"`:""}/>
+  ${st!=="idle"?`<path d="M106 26 L134 26 L150 70 L90 70 Z" fill="${lampCol}" opacity=".13"/>`:""}
+  ${wallProp(p.cat, st)}`;
+  // escritorio + silla
+  s += `<rect x="108" y="108" width="20" height="4" fill="#3D4463"/><rect x="116" y="112" width="4" height="16" fill="#3D4463"/>`;
+  if(st==="working"){
+    s += person(122,60,{skin,hair,shirt,armL:"arm-type",armR:"arm-type b",rotL:-35,rotR:35,legs:false,bob:true,
+          extra:`<g class="a pop"><path d="M14 -2l3-7 3 7-7-3 7 0z" fill="#FFD166"/></g>`});
+    s += `<rect x="96" y="96" width="94" height="6" rx="1" fill="#7A5136"/><rect x="100" y="102" width="86" height="26" fill="#8E6142"/>${deskProp(p.cat,st)}`;
+    s += `<g transform="translate(22,79)"><g class="a walker">${person(0,0,{skin:SKINS[(h>>5)%5],hair:HAIR[(h>>7)%5],shirt:shirt2,walk:true,rotL:-70,rotR:70,
+          extra:`<rect x="-10" y="18" width="20" height="13" rx="1.5" fill="#C8955F" stroke="#8E6142"/><path d="M-10 23h20" stroke="#8E6142"/>`})}</g></g>`;
+  } else if(st==="needs"){
+    s += `<rect x="96" y="96" width="94" height="6" rx="1" fill="#7A5136"/><rect x="100" y="102" width="86" height="26" fill="#8E6142"/>${deskProp(p.cat,st)}`;
+    s += person(82,79,{skin,hair,shirt,armL:"wave",armR:"",rotR:8,bob:true});
+    s += `<g class="a pop"><path d="M58 46h40a6 6 0 0 1 6 6v16a6 6 0 0 1-6 6h-22l-8 8v-8h-10a6 6 0 0 1-6-6v-16a6 6 0 0 1 6-6z" fill="#FFFFFF" stroke="#C2352B" stroke-width="2.5"/><text x="78" y="66" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="17" fill="#C2352B">¿?</text></g>`;
+  } else if(st==="done"){
+    s += person(124,58,{skin,hair,shirt,rotL:-150,rotR:150,legs:false,happy:true,extra:`<path d="M-18 4h6M12 4h6" stroke="#FFD166" stroke-width="2"/>`});
+    s += `<rect x="96" y="96" width="94" height="6" rx="1" fill="#7A5136"/><rect x="100" y="102" width="86" height="26" fill="#8E6142"/>${deskProp(p.cat,st)}`;
+    s += `<rect x="102" y="86" width="9" height="10" rx="2" fill="#FFFFFF" stroke="#9AA3BF"/><path d="M111 89q4 0 0 4" stroke="#9AA3BF" fill="none"/><path class="a steam" d="M106 83q-2-3 0-6" stroke="#9AA3BF" stroke-width="1.4" fill="none"/>`;
+    s += `<path d="M178 34v40" stroke="#5B6480" stroke-width="2"/><path d="M178 34l-22 7 22 7z" fill="#13875F"/><path d="M162 41l3 3 6-6" stroke="#fff" stroke-width="2" fill="none"/>`;
+  } else {
+    s += person(124,66,{skin,hair,shirt,sleep:true,rotL:-60,rotR:60,legs:false});
+    s += `<rect x="96" y="96" width="94" height="6" rx="1" fill="#7A5136"/><rect x="100" y="102" width="86" height="26" fill="#8E6142"/>${deskProp(p.cat,st)}`;
+    s += `<text class="a zz" x="132" y="66" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="11" fill="#5B6480">z</text><text class="a zz b" x="138" y="60" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="9" fill="#5B6480">z</text>`;
+    s += `<rect width="200" height="150" fill="#0B1020" opacity=".22"/>`;
+  }
+  return s + `</svg>`;
+}
+function roofSVG(anyWorking){
+  return `<svg viewBox="0 0 400 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M300 18v52M292 26h16M294 36h12" stroke="#4A4A4A" stroke-width="2.5"/><circle cx="300" cy="16" r="3" fill="#C2352B" class="a blink"/>
+  <rect x="52" y="40" width="34" height="34" rx="3" fill="#9AA3BF"/><rect x="50" y="36" width="38" height="8" rx="3" fill="#7A839F"/><path d="M58 74v10M80 74v10" stroke="#5B6480" stroke-width="3"/>
+  <rect x="338" y="44" width="16" height="40" fill="#8E4B36"/><rect x="334" y="40" width="24" height="6" fill="#5E2F22"/>
+  <rect x="100" y="20" width="190" height="40" rx="6" fill="#1B2340" stroke="#5E2F22" stroke-width="3"/><path d="M135 60v22M255 60v22" stroke="#4A4A4A" stroke-width="3"/>
+  <text x="195" y="47" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="18" textLength="160" lengthAdjust="spacingAndGlyphs" fill="${anyWorking?"#FFD166":"#F4F1E8"}" ${anyWorking?`class="a flick"`:""}>TALLER OUSSAMA</text>
+  <path d="M0 84h400v28H0z" fill="#5E2F22"/><path d="M0 84h400" stroke="#3E1E15" stroke-width="3"/>${Array.from({length:20},(_,k)=>`<path d="M${k*20+10} 86v26" stroke="#4E261B" stroke-width="2"/>`).join("")}
+  </svg>`;
+}
+function groundSVG(n){
+  return `<svg viewBox="0 0 400 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect width="400" height="78" fill="#8E4B36"/><rect x="0" y="0" width="6" height="78" fill="#5E2F22"/><rect x="394" y="0" width="6" height="78" fill="#5E2F22"/>
+  ${Array.from({length:8},(_,r)=>Array.from({length:12},(_,c)=>`<rect x="${(c*36)+(r%2?18:0)-10}" y="${r*10}" width="34" height="8" fill="#9C5640" opacity=".55"/>`).join("")).join("")}
+  <rect x="172" y="18" width="56" height="60" rx="3" fill="#3E1E15"/><rect x="177" y="23" width="21" height="55" fill="#2F54EB"/><rect x="202" y="23" width="21" height="55" fill="#2F54EB"/><circle cx="196" cy="52" r="2" fill="#FFD166"/><circle cx="204" cy="52" r="2" fill="#FFD166"/>
+  <rect x="160" y="6" width="80" height="12" rx="3" fill="#FFFDF6"/><text x="200" y="15.5" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="9" fill="#1B2340">ENTRADA · ${n} PISOS</text>
+  <rect x="40" y="22" width="60" height="38" fill="#9FD3F5" stroke="#FFFFFF" stroke-width="4"/><rect x="300" y="22" width="60" height="38" fill="#9FD3F5" stroke="#FFFFFF" stroke-width="4"/>
+  <rect x="112" y="52" width="16" height="26" rx="2" fill="#2F7DD1"/><rect x="110" y="48" width="20" height="6" rx="3" fill="#25639F"/>
+  <circle cx="268" cy="62" r="10" fill="#13875F"/><rect x="262" y="66" width="12" height="12" fill="#B7791F"/>
+  <rect y="78" width="400" height="18" fill="#B9C1D6"/><path d="M0 78h400" stroke="#7A839F" stroke-width="2"/>${Array.from({length:10},(_,k)=>`<path d="M${k*44+20} 78v18" stroke="#9AA3BF" stroke-width="1.5"/>`).join("")}
+  </svg>`;
+}
+function renderBuilding(L){
+  const STL = {working:"Claude trabajando…", needs:"Te necesita", done:"Terminado"};
+  const wrap = el("div",{class:"bld"});
+  const any = Object.values(state.chatStatus||{}).includes("working");
+  const roof = el("div"); roof.innerHTML = roofSVG(any); wrap.append(roof);
+  const floors = el("div",{class:"floors"});
+  // los primeros proyectos arriba, como pisos desde el ático
+  state.projects.forEach((p,i)=>{
+    const cs = state.chatStatus?.[p.id];
+    const room = el("button",{class:"room"+(cs?" st-"+cs:""),"aria-current":String(p.id===selected),"aria-label":`${p.name}${cs?" — "+STL[cs]:""}`,
+      onclick:()=>{selected=p.id; if(tab==="claude") seen(p.id); renderList(); renderDetail(); openMobileDetail();}});
+    room.innerHTML = roomSVG(p,i);
+    const plate = el("div",{class:"plate"}, el("b",{},p.name), cs ? el("span",{class:"badge"}, el("i"), STL[cs]) : null);
+    room.append(plate);
+    floors.append(room);
+  });
+  if(state.projects.length % 2){ const e=el("div",{class:"room",style:"cursor:default"}); e.innerHTML=`<svg viewBox="0 0 200 150"><rect width="200" height="150" fill="#D4CDBE"/><rect x="12" y="28" width="44" height="50" fill="#9FD3F5" stroke="#fff" stroke-width="4"/><text x="120" y="80" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="16" fill="#8E6142">SE ALQUILA</text><rect y="128" width="200" height="22" fill="#A8744F"/></svg>`; floors.append(e); }
+  wrap.append(floors);
+  const ground = el("div"); ground.innerHTML = groundSVG(state.projects.length); wrap.append(ground);
+  L.append(wrap);
+}
+
 function renderList(){
   const L = $("projList"); L.replaceChildren();
+  const v = state.view || "edificio";
+  document.querySelectorAll("#viewSw button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v===v)));
+  document.querySelector(".grid").classList.toggle("building", v==="edificio");
+  $("filters").hidden = v==="edificio";
+  if(v==="edificio"){ renderBuilding(L); $("legend").hidden = !Object.keys(state.chatStatus||{}).length; return; }
   const items = state.projects.filter(p=>filter==="todos"||p.cat===filter);
   for(const p of items){
     const open = p.tasks.filter(t=>!t.done).length, v = pct(p);
@@ -861,6 +1029,7 @@ $("dlgDelete").onclick=()=>{
   selected=state.projects[0]?.id; $("dlg").close(); save(); render();
 };
 $("newBtn").onclick=()=>openDialog(null);
+document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>{ state.view=b.dataset.v; save(); renderList(); });
 $("globalBtn").onclick=askGlobal;
 $("globalForm").addEventListener("submit",e=>{e.preventDefault();askGlobal();});
 $("globalClose").onclick=()=>$("globalOut").classList.remove("show");
