@@ -16,7 +16,7 @@
 :root{
   --bg:#EDF0F5; --panel:#FFFFFF; --panel2:#F6F8FB; --ink:#1B2340; --muted:#5B6480; --line:#D7DCE6;
   --accent:#2F54EB; --accent-ink:#FFFFFF; --ok:#13875F; --warn:#B7791F; --bad:#C2352B; --blue:#2F6FED;
-  --c-juego:#7A3FF2; --c-escuela:#0E9F8A; --c-trabajo:#B7791F; --c-auto:#2F7DD1; --c-web:#D23F7E;
+  --c-juego:#7A3FF2; --c-escuela:#0E9F8A; --c-trabajo:#B7791F; --c-auto:#2F7DD1; --c-web:#D23F7E; --c-general:#475467;
   --user-bubble:#2F54EB; --user-ink:#fff; --bot-bubble:#F1F3F8;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -28,7 +28,7 @@
   :root:not([data-theme="light"]){
     --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
     --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F; --blue:#6F9BFF;
-    --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
+    --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6; --c-general:#98A2B3;
     --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
     color-scheme: dark;
   }
@@ -36,7 +36,7 @@
 :root[data-theme="dark"]{
   --bg:#12172A; --panel:#1B2238; --panel2:#161C30; --ink:#E8ECF7; --muted:#9AA3BF; --line:#2C3552;
   --accent:#6F8BFF; --accent-ink:#0E1222; --ok:#3CC48E; --warn:#E3A93C; --bad:#F06A5F; --blue:#6F9BFF;
-  --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6;
+  --c-juego:#A57CFF; --c-escuela:#3FD0B8; --c-trabajo:#E3A93C; --c-auto:#5FA8F0; --c-web:#F06BA6; --c-general:#98A2B3;
   --user-bubble:#6F8BFF; --user-ink:#0E1222; --bot-bubble:#232B45;
   color-scheme: dark;
 }
@@ -204,7 +204,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 :root{
   --bg:#F6F7F9; --panel:#FFFFFF; --panel2:#F9FAFB; --ink:#101828; --muted:#667085; --line:#E4E7EC;
   --accent:#3A5CCC; --accent-ink:#FFFFFF; --ok:#12805C; --warn:#B54708; --bad:#C0362C; --blue:#2563EB;
-  --c-juego:#6E56CF; --c-escuela:#0F8B7A; --c-trabajo:#B54708; --c-auto:#2E6FBA; --c-web:#C11574;
+  --c-juego:#6E56CF; --c-escuela:#0F8B7A; --c-trabajo:#B54708; --c-auto:#2E6FBA; --c-web:#C11574; --c-general:#475467;
   --user-bubble:#3A5CCC; --user-ink:#fff; --bot-bubble:#F2F4F7;
   --display:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --body:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -214,14 +214,14 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   :root:not([data-theme="light"]){
     --bg:#0C111D; --panel:#161B26; --panel2:#1F242F; --ink:#F5F5F6; --muted:#94969C; --line:#2A2F3A;
     --accent:#7C93F0; --accent-ink:#0C111D; --ok:#47CD89; --warn:#FDB022; --bad:#F97066; --blue:#5B8DEF;
-    --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7;
+    --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7; --c-general:#98A2B3;
     --user-bubble:#7C93F0; --user-ink:#0C111D; --bot-bubble:#1F242F; --shadow:none;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0C111D; --panel:#161B26; --panel2:#1F242F; --ink:#F5F5F6; --muted:#94969C; --line:#2A2F3A;
   --accent:#7C93F0; --accent-ink:#0C111D; --ok:#47CD89; --warn:#FDB022; --bad:#F97066; --blue:#5B8DEF;
-  --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7;
+  --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7; --c-general:#98A2B3;
   --user-bubble:#7C93F0; --user-ink:#0C111D; --bot-bubble:#1F242F; --shadow:none;
 }
 body{font:400 14px/1.5 var(--body);letter-spacing:-.005em}
@@ -378,7 +378,8 @@ const CATS = {
   escuela: {label:"CFGS · Escuela",   color:"var(--c-escuela)"},
   trabajo: {label:"Trabajo",          color:"var(--c-trabajo)"},
   auto:    {label:"Automatización",   color:"var(--c-auto)"},
-  web:     {label:"Web personal",     color:"var(--c-web)"}
+  web:     {label:"Web personal",     color:"var(--c-web)"},
+  general: {label:"General",          color:"var(--c-general)"}
 };
 const STATUSES = ["Activo","En pausa","Bloqueado","Terminado"];
 
@@ -398,25 +399,13 @@ const DEFAULT_PROJECTS = [
    desc:"FPS táctico web original (VANGUARD vs RAVEN, mapa SECTOR-17) con la sensación de los shooters de 2000 y bots IA.",
    link:"https://github.com/ossama450298-commits/BLACKSITEVECTOR",
    tasks:[T("Personajes y armas lo más realistas posible"), T("Buscar mapas/escenarios realistas sin derechos de autor"), T("Mantener versión de un solo archivo blacksite-vector.html")], notes:""},
-  {id:"valmira", name:"Valmira: Sal y Asfalto", cat:"juego", status:"Activo",
-   desc:"Mundo abierto 3D para navegador en Three.js, inspirado en GTA V con contenido original y código modular.",
-   link:"", tasks:[T("Subir la calidad gráfica al máximo"), T("Crear repositorio en GitHub")], notes:""},
-  {id:"radar", name:"Radar MYSLF", cat:"auto", status:"Activo",
-   desc:"Email diario con ofertas de YSL MYSLF Le Parfum 100 ml: busca a las 6:00 y envía a las 7:00 (Madrid) con GitHub Actions.",
-   link:"", tasks:[T("Terminar la automatización en el repo myslf-radar"), T("Comprobar que llega el email de las 7:00")], notes:""},
-  {id:"ptm", name:"Contabilidad PauTravelMoto", cat:"trabajo", status:"Activo",
-   desc:"Conciliaciones de proveedores, Norma 43 (CaixaBank, Sabadell), facturas para la gestoría, IVA/IRPF trimestral y nóminas.",
-   link:"", tasks:[T("Preparar facturas del trimestre para la gestoría"), T("Revisar servicios prestados pendientes de facturar")], notes:""},
-  {id:"alegaciones", name:"Web de alegaciones", cat:"web", status:"Activo",
-   desc:"Página propia en GitHub enlazada desde el botón «Presentar alegaciones» de los correos en broma.",
-   link:"", tasks:[], notes:""},
-  {id:"mail", name:"HIGIENEX Mail", cat:"auto", status:"Terminado",
-   desc:"App de Google Cloud con permiso gmail.send para que Claude envíe correos con adjuntos (informes de proyectos, resúmenes de GitHub).",
+  {id:"consultas", name:"Consultas Claude", cat:"general", status:"Activo",
+   desc:"Preguntas generales y dudas rápidas para Claude que no pertenecen a ningún proyecto.",
    link:"", tasks:[], notes:""}
 ];
 
 /* ---------- State & persistence ---------- */
-let state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)), chats:{}, theme:null, updatedAt:0};
+let state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)), chats:{}, theme:null, updatedAt:0, mig2:true};
 let selected = "higienex", filter = "todos", tab = "tareas";
 let db = null, docRef = null, sample = null, sampleChecked = false;
 const LS_KEY = "panel-proyectos-v1";
@@ -435,9 +424,21 @@ function save(){
     try{ await docRef.set({json: JSON.stringify(state)}); }catch(e){ console.warn("db save", e); }
   }, 600);
 }
+function migrate(){
+  if(state.mig2) return;
+  const keep = ["higienex","nexo9","blacksite","consultas"];
+  const gone = state.projects.filter(p=>!keep.includes(p.id)).map(p=>p.id);
+  state.projects = state.projects.filter(p=>keep.includes(p.id));
+  for(const id of gone){ delete state.chats?.[id]; delete state.chatStatus?.[id]; delete state.ghIssues?.[id]; delete state.ghPending?.[id]; }
+  if(!state.projects.some(p=>p.id==="consultas")) state.projects.push({id:"consultas", name:"Consultas Claude", cat:"general", status:"Activo",
+    desc:"Preguntas generales y dudas rápidas para Claude que no pertenecen a ningún proyecto.", link:"", tasks:[], notes:""});
+  state.mig2 = true;
+  setTimeout(()=>{ try{ save(); }catch(e){} }, 1500);
+}
 function applyLoaded(s){
   if(!s || !Array.isArray(s.projects)) return;
   state = Object.assign({chats:{}}, s);
+  migrate();
   if(!state.projects.find(p=>p.id===selected)) selected = state.projects[0]?.id;
 }
 
