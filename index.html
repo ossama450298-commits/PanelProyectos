@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panel de proyectos · Oussama</title>
-<meta name="theme-color" content="#2F54EB">
+<meta name="theme-color" content="#F6F7F9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Proyectos">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EDF0F5; --panel:#FFFFFF; --panel2:#F6F8FB; --ink:#1B2340; --muted:#5B6480; --line:#D7DCE6;
@@ -194,78 +194,122 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   .primary,.ghost{min-height:42px}
   dialog{margin:auto 0 0;width:100vw;max-width:100vw;border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 }
-/* ---------- Vista edificio ---------- */
-.grid.building{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
-@media (max-width:860px){.grid.building{grid-template-columns:1fr}}
 .filters[hidden]{display:none}
 .fwd{align-self:flex-start;margin:-8px 0 0 8px;border:0;background:transparent;color:var(--muted);font-size:12px;padding:2px 4px}
 .fwd:hover{color:var(--accent)}
-.viewsw{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.viewsw button{border:0;background:transparent;padding:4px 10px;font-size:13px;color:var(--muted)}
-.viewsw button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
-.bld{margin:2px auto 6px;max-width:560px}
-.bld svg{display:block;width:100%;height:auto}
-.floors{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);background:#8E4B36;border:6px solid #5E2F22;border-top:0;border-bottom:0;gap:5px;padding:5px}
-.room{position:relative;border:0;padding:0;margin:0;cursor:pointer;aspect-ratio:5/3;image-rendering:pixelated;overflow:hidden;background:#3a2a24;border-radius:3px;box-shadow:inset 0 0 0 2px #5E2F22}
-.room svg{width:100%;height:100%}
-.room:hover{filter:brightness(1.06)}
-.room[aria-current="true"]{box-shadow:0 0 0 3px var(--accent), inset 0 0 0 2px #5E2F22;z-index:1}
-.plate{position:absolute;left:3px;right:3px;top:3px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;pointer-events:none}
-.plate b{font:700 11px/1.15 var(--display);background:rgba(255,253,246,.92);color:#1B2340;border-radius:5px;padding:2px 6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 0 rgba(0,0,0,.25)}
-.plate .badge{background:rgba(255,253,246,.92);border-radius:3px;padding:1px 5px;margin:0;font-size:10px}
-.plate b,.plate .badge{border-radius:2px}
-.room.st-working{--st:var(--blue)} .room.st-needs{--st:var(--bad)} .room.st-done{--st:var(--ok)}
-.room[class*="st-"]{box-shadow:0 0 0 3px var(--st), inset 0 0 0 2px #5E2F22}
-.room[class*="st-"][aria-current="true"]{box-shadow:0 0 0 3px var(--st), 0 0 0 6px var(--accent)}
-@media (max-width:420px){.plate b{font-size:10px}.plate .badge{font-size:9px}}
-/* animaciones de los personajes */
-.room .a{transform-box:fill-box}
-.arm-type{transform-origin:50% 0;animation:type .32s ease-in-out infinite}
-.arm-type.b{animation-delay:.16s}
-.walker{animation:walk 7s ease-in-out infinite}
-.leg1{transform-origin:50% 0;animation:leg .5s ease-in-out infinite}
-.leg2{transform-origin:50% 0;animation:leg .5s ease-in-out infinite reverse}
-.bob{animation:bob .9s ease-in-out infinite}
-.wave{transform-origin:50% 0;animation:wave .6s ease-in-out infinite}
-.zz{animation:zz 2.6s ease-in infinite}.zz.b{animation-delay:1.3s}
-.blink{animation:blink 1s steps(2,start) infinite}
-.flick{animation:flick 1.6s linear infinite}
-.steam{animation:zz 2.2s ease-in infinite}
-.led{animation:blink .7s steps(2,start) infinite}.led.b{animation-delay:.35s}
-.pop{transform-origin:50% 100%;animation:pop 1.4s ease-in-out infinite}
-.f1{animation:fa .45s steps(1) infinite}.f2{animation:fb .45s steps(1) infinite}
-@keyframes fa{0%{opacity:1}50%{opacity:0}}@keyframes fb{0%{opacity:0}50%{opacity:1}}
-.walker{animation-timing-function:steps(16)}
-@keyframes type{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(10deg)}}
-@keyframes walk{0%{transform:translateX(0)}45%{transform:translateX(42px)}55%{transform:translateX(42px)}100%{transform:translateX(0)}}
-@keyframes leg{0%,100%{transform:rotate(22deg)}50%{transform:rotate(-22deg)}}
-@keyframes bob{50%{transform:translateY(-2.5px)}}
-@keyframes wave{0%,100%{transform:rotate(-160deg)}50%{transform:rotate(-125deg)}}
-@keyframes zz{0%{opacity:0;transform:translate(0,0)}25%{opacity:1}100%{opacity:0;transform:translate(9px,-22px)}}
-@keyframes blink{50%{opacity:.2}}
-@keyframes flick{0%,100%{opacity:1}40%{opacity:.75}45%{opacity:1}70%{opacity:.85}}
-@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-@media (prefers-reduced-motion:reduce){.room *{animation:none!important}}
 
 @media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+
+/* ================= Tema profesional ================= */
+:root{
+  --bg:#F6F7F9; --panel:#FFFFFF; --panel2:#F9FAFB; --ink:#101828; --muted:#667085; --line:#E4E7EC;
+  --accent:#3A5CCC; --accent-ink:#FFFFFF; --ok:#12805C; --warn:#B54708; --bad:#C0362C; --blue:#2563EB;
+  --c-juego:#6E56CF; --c-escuela:#0F8B7A; --c-trabajo:#B54708; --c-auto:#2E6FBA; --c-web:#C11574;
+  --user-bubble:#3A5CCC; --user-ink:#fff; --bot-bubble:#F2F4F7;
+  --display:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --body:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --shadow:0 1px 2px rgba(16,24,40,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C111D; --panel:#161B26; --panel2:#1F242F; --ink:#F5F5F6; --muted:#94969C; --line:#2A2F3A;
+    --accent:#7C93F0; --accent-ink:#0C111D; --ok:#47CD89; --warn:#FDB022; --bad:#F97066; --blue:#5B8DEF;
+    --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7;
+    --user-bubble:#7C93F0; --user-ink:#0C111D; --bot-bubble:#1F242F; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C111D; --panel:#161B26; --panel2:#1F242F; --ink:#F5F5F6; --muted:#94969C; --line:#2A2F3A;
+  --accent:#7C93F0; --accent-ink:#0C111D; --ok:#47CD89; --warn:#FDB022; --bad:#F97066; --blue:#5B8DEF;
+  --c-juego:#9E8CFC; --c-escuela:#3CCB7F; --c-trabajo:#FDB022; --c-auto:#53B1FD; --c-web:#F670C7;
+  --user-bubble:#7C93F0; --user-ink:#0C111D; --bot-bubble:#1F242F; --shadow:none;
+}
+body{font:400 14px/1.5 var(--body);letter-spacing:-.005em}
+.wrap{max-width:1320px;padding:24px 24px 40px}
+.hero{grid-template-columns:1fr auto;align-items:center;margin-bottom:20px;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.hero h1{font:600 20px/1.2 var(--display);letter-spacing:-.01em;max-width:none}
+.hero p{margin:2px 0 0;font-size:13px}
+.primary{border-radius:8px;padding:8px 14px;font-weight:600;font-size:14px;box-shadow:var(--shadow)}
+.ghost{border-radius:8px;padding:8px 12px;font-size:14px;font-weight:500;background:var(--panel);box-shadow:var(--shadow)}
+.primary:hover{filter:brightness(1.07)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.k-l{font-size:13px;color:var(--muted);font-weight:500}
+.k-n{font:600 28px/1.15 var(--display);margin:4px 0 2px;letter-spacing:-.02em}
+.k-s{font-size:12px;color:var(--muted)}
+.kpi.k-blue .k-n{color:var(--blue)} .kpi.k-red .k-n{color:var(--bad)}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr}}
+.ask{border-radius:12px;padding:6px 6px 6px 14px;margin-bottom:20px;box-shadow:var(--shadow)}
+.ask .lbl{font:600 13px var(--body);color:var(--muted)}
+.global-out{border-radius:12px;box-shadow:var(--shadow)}
+.grid{grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:16px}
+.list{border-radius:12px;padding:6px;box-shadow:var(--shadow)}
+.list-head{padding:10px 10px 8px}
+.list-head h2{font:600 15px var(--display)}
+.chip{border-radius:6px;font-size:12.5px;padding:3px 9px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.legend{display:none!important}
+.proj{grid-template-columns:3px 1fr auto;gap:12px;border-radius:8px;padding:10px 12px 10px 0;border-bottom:1px solid transparent}
+.proj .bar{min-height:34px;border-radius:0 3px 3px 0}
+.proj .name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.proj .sub{font-size:12.5px}
+.proj[aria-current="true"]{background:color-mix(in srgb, var(--accent) 8%, transparent)}
+.proj[class*="st-"],.proj[class*="st-"]:hover,.proj[class*="st-"][aria-current="true"]{background:transparent}
+.proj[class*="st-"][aria-current="true"]{background:color-mix(in srgb, var(--accent) 8%, transparent)}
+.proj[class*="st-"] .bar{background:var(--cat)}
+.badge{margin:0;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;background:color-mix(in srgb, var(--st) 12%, transparent);color:var(--st);gap:5px}
+.badge i{width:6px;height:6px}
+.pmain{min-width:0}
+.pmeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:56px}
+.pnum{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.pbar{display:block;width:56px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--cat);border-radius:2px}
+.detail{border-radius:12px;box-shadow:var(--shadow)}
+.d-top{padding:20px 24px 16px}
+.d-top::before{display:none}
+.d-cat{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.d-top h2{font:600 22px/1.25 var(--display);letter-spacing:-.01em;margin:4px 0 6px}
+.d-top p{font-size:14px}
+.status{border-radius:8px;padding:6px 10px;font-size:13px}
+.tabs{padding:0 16px;gap:2px}
+.tab{font-size:13.5px;font-weight:500;padding:12px 10px}
+.tab[aria-selected="true"]{border-bottom-color:var(--accent);font-weight:600}
+.task{padding:10px 4px}
+.task input{accent-color:var(--accent)}
+.msg{border-radius:12px;font-size:14px}
+.add input,.notes textarea,.composer textarea,dialog input,dialog select,dialog textarea{border-radius:8px;background:var(--panel)}
+.add input:focus,.notes textarea:focus,.composer textarea:focus,dialog input:focus,dialog select:focus,dialog textarea:focus,.ask:focus-within{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent)}
+dialog{border-radius:14px;box-shadow:0 20px 40px rgba(16,24,40,.18)}
+dialog h3{font:600 17px var(--display)}
+.sugg button{border-style:solid;border-radius:999px;font-size:12.5px}
+.off{border-radius:10px;font-size:13.5px}
+.send{border-radius:10px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.wrap{padding:16px 14px 28px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="hero">
-    <div>
-      <h1 id="headline">Tus proyectos, en un solo sitio</h1>
-      <p id="subline">Cargando…</p>
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+      <div>
+        <h1 id="headline">Panel de proyectos</h1>
+        <p id="subline">Cargando…</p>
+      </div>
     </div>
     <div class="tools">
-      <button class="ghost" id="ghBtn" hidden>⚙ Conexión</button>
-      <button class="ghost" id="themeBtn" title="Cambiar tema">◐ Tema</button>
-      <button class="primary" id="newBtn">+ Nuevo proyecto</button>
+      <button class="ghost" id="ghBtn" hidden>Conexión</button>
+      <button class="ghost" id="themeBtn" title="Cambiar tema claro u oscuro">Tema</button>
+      <button class="primary" id="newBtn">Nuevo proyecto</button>
     </div>
   </header>
 
+  <section class="kpis" id="kpis" aria-label="Resumen"></section>
+
   <form class="ask" id="globalForm" onsubmit="return false">
-    <span class="lbl">Claude</span>
+    <span class="lbl">Preguntar a Claude</span>
     <input id="globalInput" placeholder="Pregunta sobre todos tus proyectos: “¿qué priorizo esta semana?”" autocomplete="off">
     <button class="primary" id="globalBtn" type="submit">Preguntar</button>
   </form>
@@ -276,7 +320,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 
   <div class="grid">
     <nav class="list" aria-label="Proyectos">
-      <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span class="viewsw" id="viewSw"><button data-v="edificio">Edificio</button><button data-v="lista">Lista</button></span><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
+      <div class="list-head"><h2>Proyectos</h2><span style="display:flex;gap:10px;align-items:center"><span id="syncLbl" style="color:var(--muted);font-size:12px"></span><span class="sub" id="countLbl" style="color:var(--muted);font-size:13px"></span></span></div>
       <div class="filters" id="filters"></div>
       <div class="legend" id="legend" hidden><span><i style="background:var(--blue)"></i>Trabajando</span><span><i style="background:var(--bad)"></i>Te necesita</span><span><i style="background:var(--ok)"></i>Terminado</span></div>
       <div id="projList"></div>
@@ -440,16 +484,17 @@ function closeMobileDetail(fromPop){
   document.body.classList.remove("show-detail"); renderList(); scrollTo(0,0);
   if(!fromPop){ try{ if(history.state&&history.state.detail) history.back(); }catch(e){} }
 }
-let lastCols = innerWidth < 600 ? 2 : 3;
-addEventListener("resize",()=>{ const c = innerWidth < 600 ? 2 : 3; if(c!==lastCols){ lastCols=c; if((state.view||"edificio")==="edificio") renderList(); } });
 addEventListener("popstate",()=>{ if(document.body.classList.contains("show-detail")) closeMobileDetail(true); });
 
 /* ---------- Render ---------- */
 function render(){
   const open = state.projects.reduce((a,p)=>a+p.tasks.filter(t=>!t.done).length,0);
   const active = state.projects.filter(p=>p.status==="Activo").length;
-  $("headline").textContent = `Oussama, tienes ${active} proyecto${active===1?"":"s"} en marcha`;
-  $("subline").textContent = `${open} tarea${open===1?"":"s"} abierta${open===1?"":"s"} en ${state.projects.length} proyectos. Pídele a Claude que las organice, las cree o te explique por dónde seguir.`;
+  $("subline").textContent = `${state.projects.length} proyectos · actualizado ${new Date(state.updatedAt||Date.now()).toLocaleDateString("es-ES",{day:"numeric",month:"short"})}`;
+  const stv = Object.values(state.chatStatus||{});
+  const kp = [["Proyectos activos", active, `de ${state.projects.length}`, ""],["Tareas abiertas", open, "en todos los proyectos", ""],
+              ["Claude trabajando", stv.filter(s=>s==="working").length, "en curso", "k-blue"],["Requieren tu respuesta", stv.filter(s=>s==="needs").length, "pendientes", "k-red"]];
+  $("kpis").replaceChildren(...kp.map(([l,n,s,c])=>el("div",{class:"kpi "+c}, el("div",{class:"k-l"},l), el("div",{class:"k-n"},String(n)), el("div",{class:"k-s"},s))));
   $("countLbl").textContent = state.projects.length;
   renderFilters(); renderList(); renderDetail();
 }
@@ -460,143 +505,18 @@ function renderFilters(){
     f.append(el("button",{class:"chip","aria-pressed":String(filter===k),onclick:()=>{filter=k;renderFilters();renderList();}},label));
   }
 }
-/* ---------- Vista edificio: cada piso es un proyecto (personajes pixel art originales) ---------- */
-const SHIRTS=["#2F54EB","#0E9F8A","#7A3FF2","#E07A1F","#D23F7E","#2F7DD1","#13875F","#B7791F"];
-const SKINS=["#F5C9A0","#E0A878","#B97A50","#8D5A3B"], HAIRS=["#2B1D14","#6B4226","#1B1B1B","#A8652F"];
-const WALLS={juego:["#2E2A55","#3A3570"],escuela:["#D8EBDD","#C5E0CC"],trabajo:["#F2E2C4","#E6D1A8"],auto:["#D3E1F2","#BED2EB"],web:["#F3D9E5","#E6C0D2"]};
-function hashN(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); }
-// Sprites 10×14. C gorra · H pelo · S piel · K ojos/contorno · T camiseta · O peto · B botas · W blanco
-const SPR = {
-  stand:["...CCCC...","..CCCCCCC.","..HSSKSK..","..SSSSSS..","...SSSS...","..TTOOTT..",".STTOOTTS.",".STOOOOTS.","..OOOOOO..","..OOOOOO..","..OO..OO..","..OO..OO..",".BBB..BBB.",".........."],
-  walk: ["...CCCC...","..CCCCCCC.","..HSSKSK..","..SSSSSS..","...SSSS...","..TTOOTT..",".STTOOTTS.",".STOOOOTS.","..OOOOOO..","..OOOOOO..",".OO....OO.",".OO....OO.","BBB....BBB",".........."],
-  type1:["...CCCC...","..CCCCCCC.","..HSSKSK..","..SSSSSS..","...SSSS...","..TTOOTT..",".TTTOOTTT.","STTOOOOTTS","..OOOOOO..","..OOOOOO..","..........","..........","..........",".........."],
-  type2:["...CCCC...","..CCCCCCC.","..HSSKSK..","..SSSSSS..","...SSSS...","..TTOOTT..",".STTOOTTS.",".TTOOOOTT.","S.OOOOOO.S","..OOOOOO..","..........","..........","..........",".........."],
-  wave1:["...CCCC..S","..CCCCCCCT","..HSSKSK.T","..SSSSSS.T","...SSSS..T","..TTOOTTT.",".STTOOTT..",".STOOOOT..","..OOOOOO..","..OOOOOO..","..OO..OO..","..OO..OO..",".BBB..BBB.",".........."],
-  wave2:["...CCCC...","..CCCCCCC.","..HSSKSK..","..SSSSSS.S","...SSSS.T.","..TTOOTTT.",".STTOOTT..",".STOOOOT..","..OOOOOO..","..OOOOOO..","..OO..OO..","..OO..OO..",".BBB..BBB.",".........."],
-  happy:["S..CCCC..S","T.CCCCCCCT","T.HSSKSK.T","T.SSKKSS.T",".TTSSSSTT.","..TTOOTT..","..TTOOTT..","..TOOOOT..","..OOOOOO..","..OOOOOO..","..........","..........","..........",".........."],
-  sleep:["..........","..........","..........","..........","..........","..CCCC....",".CCCCCC...",".HSSSSSC..",".SKKSKKS..","TTSSSSSTT.","TTTOOTTTTT","..........","..........",".........."]
-};
-function spriteSVG(name, x, y, pal, px=3, cls=""){
-  const rows = SPR[name]; let s = `<g class="${cls}" transform="translate(${x},${y})" shape-rendering="crispEdges">`;
-  rows.forEach((r,yy)=>{ let xx=0; while(xx<r.length){ const ch=r[xx]; if(ch==="."){ xx++; continue; } let e=xx; while(e<r.length && r[e]===ch) e++; s+=`<rect x="${xx*px}" y="${yy*px}" width="${(e-xx)*px}" height="${px}" fill="${pal[ch]}"/>`; xx=e; } });
-  return s+`</g>`;
-}
-function px(x,y,w,h,c,extra=""){ return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" ${extra}/>`; }
-function pixProps(cat, st){
-  const on = st!=="idle", scr = on ? "#7FE3FF" : "#2C3552", fl = st==="working" ? `class="flick"` : "";
-  const monitor = (inner) => px(132,38,24,17,"#1B1B2F")+`<g ${fl}>${px(134,40,20,13,scr)}${on?inner:""}</g>`+px(141,55,6,3,"#1B1B2F");
-  let wall="", desk="";
-  if(cat==="juego"){ wall = px(44,14,34,24,"#1B1640")+px(46,16,30,20,"#5B3FD6")+px(52,22,4,4,"#FFD166")+px(62,24,4,4,"#FF5A7A")+px(48,32,26,2,"#3CC48E");
-    desk = monitor(px(138,44,3,3,"#FF5A7A")+px(146,44,3,3,"#FF5A7A")+px(136,49,16,2,"#3CC48E"))+px(118,56,9,3,"#C2352B"); }
-  else if(cat==="escuela"){ wall = px(42,14,40,24,"#8B5E3C")+px(44,16,36,20,"#2E5E4E")+`<text x="62" y="30" text-anchor="middle" font-family="'Press Start 2P', monospace" font-size="7" fill="#F4F1E8">AF2</text>`;
-    desk = px(134,52,20,6,"#2F54EB")+px(136,47,17,5,"#0E9F8A")+px(133,42,19,5,"#E07A1F"); }
-  else if(cat==="trabajo"){ wall = px(44,30,18,50,"#8E96B0")+[0,1,2].map(i=>px(46,33+i*16,14,13,"#B9C1D6")+px(51,38+i*16,4,2,"#5B6480")).join("")+px(68,14,18,14,"#FFFFFF")+px(70,23,3,3,"#13875F")+px(74,20,3,6,"#13875F")+px(78,17,3,9,"#13875F");
-    desk = px(136,42,16,16,"#FFFFFF")+px(138,46,12,1,"#9AA3BF")+px(138,50,12,1,"#9AA3BF")+px(120,50,10,8,"#5B6480")+px(122,52,6,2,"#B9F6CA"); }
-  else if(cat==="auto"){ wall = px(44,26,20,54,"#2B2F45")+[0,1,2,3].map(i=>px(47,30+i*12,14,8,"#3D4463")+px(57,33+i*12,2,2,on?"#3CC48E":"#5B6480",on?`class="led${i%2?" b":""}"`:"")).join("");
-    desk = monitor(px(137,43,10,2,"#3CC48E")+px(137,47,14,2,"#3CC48E")); }
-  else { wall = px(42,14,40,26,"#D23F7E")+px(44,19,36,19,"#FFFFFF")+px(46,22,18,3,"#F5C2D6")+px(46,28,30,2,"#F5C2D6")+px(46,32,24,2,"#F5C2D6")+px(44,15,2,2,"#FFFFFF")+px(48,15,2,2,"#FFFFFF");
-    desk = monitor(px(136,42,16,3,"#D23F7E")+px(136,47,10,4,"#FFFFFF")); }
-  return {wall, desk};
-}
-function roomSVG(p, i){
-  const st = state.chatStatus?.[p.id] || "idle";
-  const [w1,w2] = WALLS[p.cat] || WALLS.web;
-  const h = hashN(p.id);
-  const pal = {C:SHIRTS[i%SHIRTS.length], H:HAIRS[h%4], S:SKINS[(h>>2)%4], K:"#1B1B2F", T:"#F4F1E8", O:"#2B3A67", B:"#5A3A22", W:"#FFFFFF"};
-  const pal2 = Object.assign({}, pal, {C:SHIRTS[(i+3)%SHIRTS.length], S:SKINS[(h>>4)%4], H:HAIRS[(h>>6)%4], O:"#6B4226"});
-  const lamp = st==="needs" ? "#FF5A4E" : st==="working" ? "#FFE48A" : st==="done" ? "#7CF0B5" : "#D8D2BE";
-  const night = p.cat==="juego" ? "#1E2850" : "#8FCBF2";
-  const {wall, desk} = pixProps(p.cat, st);
-  let s = `<svg viewBox="0 0 160 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" shape-rendering="crispEdges">
-  <defs><pattern id="wp${i}" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${w1}"/><rect width="4" height="4" fill="${w2}"/><rect x="4" y="4" width="4" height="4" fill="${w2}"/></pattern>
-  <pattern id="fl${i}" width="16" height="8" patternUnits="userSpaceOnUse"><rect width="16" height="8" fill="#A8744F"/><rect width="8" height="8" fill="#966443"/></pattern></defs>
-  <rect width="160" height="96" fill="url(#wp${i})"/>
-  ${px(8,14,28,26,"#FFFFFF")}${px(10,16,11,10,night)}${px(23,16,11,10,night)}${px(10,28,11,10,night)}${px(23,28,11,10,night)}${px(6,40,32,3,"#E9E2D0")}
-  <rect y="80" width="160" height="16" fill="url(#fl${i})"/>${px(0,80,160,2,"#6E4A30")}
-  ${px(99,0,2,6,"#4A4A4A")}${px(94,6,12,4,"#4A4A4A")}${px(97,10,6,4,lamp, st==="needs"?`class="blink"`:"")}
-  ${wall}`;
-  const deskBlock = px(86,58,72,4,"#6E4A30")+px(88,62,68,18,"#8E6142")+px(90,64,64,1,"#A8744F");
-  if(st==="working"){
-    s += spriteSVG("type1",100,22,pal,3,"f1")+spriteSVG("type2",100,22,pal,3,"f2")+deskBlock+desk;
-    s += `<g class="pop">${px(132,26,3,3,"#FFD166")}${px(129,29,3,3,"#FFD166")}${px(135,29,3,3,"#FFD166")}</g>`;
-    s += `<g transform="translate(8,38)"><g class="walker">${spriteSVG("stand",0,0,pal2,3,"f1")}${spriteSVG("walk",0,0,pal2,3,"f2")}${px(4,15,22,12,"#C8955F")}${px(4,20,22,2,"#8E6142")}</g></g>`;
-  } else if(st==="needs"){
-    s += deskBlock+desk+spriteSVG("wave1",62,38,pal,3,"f1")+spriteSVG("wave2",62,38,pal,3,"f2");
-    s += `<g class="pop">${px(46,6,40,24,"#C2352B")}${px(48,8,36,20,"#FFFFFF")}${px(58,30,6,4,"#C2352B")}<text x="66" y="23" text-anchor="middle" font-family="'Press Start 2P', monospace" font-size="10" fill="#C2352B">?!</text></g>`;
-  } else if(st==="done"){
-    s += `<g class="bob">${spriteSVG("happy",100,20,pal,3)}</g>`+deskBlock+desk;
-    s += px(150,16,2,28,"#5B6480")+px(138,16,12,10,"#13875F")+px(141,21,2,2,"#FFFFFF")+px(143,23,2,2,"#FFFFFF")+px(145,19,2,4,"#FFFFFF");
-    s += px(92,50,6,8,"#FFFFFF")+px(98,52,2,4,"#FFFFFF")+`<g class="steam">${px(94,44,2,4,"#C9CED9")}</g>`;
-  } else {
-    s += deskBlock+spriteSVG("sleep",100,28,pal,3)+desk;
-    s += `<text class="zz" x="122" y="40" font-family="'Press Start 2P', monospace" font-size="7" fill="#5B6480">z</text><text class="zz b" x="128" y="33" font-family="'Press Start 2P', monospace" font-size="6" fill="#5B6480">z</text>`;
-    s += `<rect width="160" height="96" fill="#0B1020" opacity=".25"/>`;
-  }
-  return s + `</svg>`;
-}
-function roofSVG(anyWorking){
-  return `<svg viewBox="0 0 400 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M300 18v52M292 26h16M294 36h12" stroke="#4A4A4A" stroke-width="2.5"/><circle cx="300" cy="16" r="3" fill="#C2352B" class="a blink"/>
-  <rect x="52" y="40" width="34" height="34" rx="3" fill="#9AA3BF"/><rect x="50" y="36" width="38" height="8" rx="3" fill="#7A839F"/><path d="M58 74v10M80 74v10" stroke="#5B6480" stroke-width="3"/>
-  <rect x="338" y="44" width="16" height="40" fill="#8E4B36"/><rect x="334" y="40" width="24" height="6" fill="#5E2F22"/>
-  <rect x="100" y="20" width="190" height="40" rx="6" fill="#1B2340" stroke="#5E2F22" stroke-width="3"/><path d="M135 60v22M255 60v22" stroke="#4A4A4A" stroke-width="3"/>
-  <text x="195" y="47" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-size="15" textLength="140" lengthAdjust="spacingAndGlyphs" style="font-family:'Press Start 2P',monospace" fill="${anyWorking?"#FFD166":"#F4F1E8"}" ${anyWorking?`class="a flick"`:""}>PROYECTOS</text>
-  <path d="M0 84h400v28H0z" fill="#5E2F22"/><path d="M0 84h400" stroke="#3E1E15" stroke-width="3"/>${Array.from({length:20},(_,k)=>`<path d="M${k*20+10} 86v26" stroke="#4E261B" stroke-width="2"/>`).join("")}
-  </svg>`;
-}
-function groundSVG(n){
-  return `<svg viewBox="0 0 400 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <rect width="400" height="78" fill="#8E4B36"/><rect x="0" y="0" width="6" height="78" fill="#5E2F22"/><rect x="394" y="0" width="6" height="78" fill="#5E2F22"/>
-  ${Array.from({length:8},(_,r)=>Array.from({length:12},(_,c)=>`<rect x="${(c*36)+(r%2?18:0)-10}" y="${r*10}" width="34" height="8" fill="#9C5640" opacity=".55"/>`).join("")).join("")}
-  <rect x="172" y="18" width="56" height="60" rx="3" fill="#3E1E15"/><rect x="177" y="23" width="21" height="55" fill="#2F54EB"/><rect x="202" y="23" width="21" height="55" fill="#2F54EB"/><circle cx="196" cy="52" r="2" fill="#FFD166"/><circle cx="204" cy="52" r="2" fill="#FFD166"/>
-  <rect x="160" y="6" width="80" height="12" rx="3" fill="#FFFDF6"/><text x="200" y="15.5" text-anchor="middle" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="9" fill="#1B2340">ENTRADA · ${n} PISOS</text>
-  <rect x="40" y="22" width="60" height="38" fill="#9FD3F5" stroke="#FFFFFF" stroke-width="4"/><rect x="300" y="22" width="60" height="38" fill="#9FD3F5" stroke="#FFFFFF" stroke-width="4"/>
-  <rect x="112" y="52" width="16" height="26" rx="2" fill="#2F7DD1"/><rect x="110" y="48" width="20" height="6" rx="3" fill="#25639F"/>
-  <circle cx="268" cy="62" r="10" fill="#13875F"/><rect x="262" y="66" width="12" height="12" fill="#B7791F"/>
-  <rect y="78" width="400" height="18" fill="#B9C1D6"/><path d="M0 78h400" stroke="#7A839F" stroke-width="2"/>${Array.from({length:10},(_,k)=>`<path d="M${k*44+20} 78v18" stroke="#9AA3BF" stroke-width="1.5"/>`).join("")}
-  </svg>`;
-}
-function renderBuilding(L){
-  const STL = {working:"Claude trabajando…", needs:"Te necesita", done:"Terminado"};
-  const wrap = el("div",{class:"bld"});
-  const any = Object.values(state.chatStatus||{}).includes("working");
-  const roof = el("div"); roof.innerHTML = roofSVG(any); wrap.append(roof);
-  const cols = innerWidth < 600 ? 2 : 3;
-  const floors = el("div",{class:"floors",style:`--cols:${cols}`});
-  // los primeros proyectos arriba, como pisos desde el ático
-  state.projects.forEach((p,i)=>{
-    const cs = state.chatStatus?.[p.id];
-    const room = el("button",{class:"room"+(cs?" st-"+cs:""),"aria-current":String(p.id===selected),"aria-label":`${p.name}${cs?" — "+STL[cs]:""}`,
-      onclick:()=>{selected=p.id; if(tab==="claude") seen(p.id); renderList(); renderDetail(); openMobileDetail();}});
-    room.innerHTML = roomSVG(p,i);
-    const plate = el("div",{class:"plate"}, el("b",{},p.name), cs ? el("span",{class:"badge"}, el("i"), STL[cs]) : null);
-    room.append(plate);
-    floors.append(room);
-  });
-  for(let k = state.projects.length % cols ? cols - state.projects.length % cols : 0; k>0; k--){ const e=el("div",{class:"room",style:"cursor:default"}); e.innerHTML=`<svg viewBox="0 0 160 96" shape-rendering="crispEdges"><rect width="160" height="96" fill="#CFC7B6"/><rect x="8" y="14" width="28" height="26" fill="#FFFFFF"/><rect x="10" y="16" width="24" height="22" fill="#8FCBF2"/><rect x="62" y="34" width="84" height="22" fill="#FFFDF6"/><text x="104" y="49" text-anchor="middle" font-family="'Press Start 2P', monospace" font-size="7" fill="#8E4B36">SE ALQUILA</text><rect y="80" width="160" height="16" fill="#A8744F"/></svg>`; floors.append(e); }
-  wrap.append(floors);
-  const ground = el("div"); ground.innerHTML = groundSVG(state.projects.length); wrap.append(ground);
-  L.append(wrap);
-}
-
 function renderList(){
   const L = $("projList"); L.replaceChildren();
-  const v = state.view || "edificio";
-  document.querySelectorAll("#viewSw button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v===v)));
-  document.querySelector(".grid").classList.toggle("building", v==="edificio");
-  $("filters").hidden = v==="edificio";
-  if(v==="edificio"){ renderBuilding(L); $("legend").hidden = !Object.keys(state.chatStatus||{}).length; return; }
   const items = state.projects.filter(p=>filter==="todos"||p.cat===filter);
   for(const p of items){
     const open = p.tasks.filter(t=>!t.done).length, v = pct(p);
     const cs = state.chatStatus?.[p.id];
-    const STL = {working:"Claude trabajando…", needs:"Claude te necesita", done:"Claude ha terminado"};
+    const STL = {working:"En curso", needs:"Requiere respuesta", done:"Completado"};
     const b = el("button",{class:"proj"+(cs?" st-"+cs:""),"aria-current":String(p.id===selected),style:`--cat:${CATS[p.cat]?.color||"var(--accent)"}`,
       onclick:()=>{selected=p.id; if(tab==="claude") seen(p.id); renderList();renderDetail(); openMobileDetail();}},
       el("span",{class:"bar"}),
-      el("span",{}, el("div",{class:"name"},p.name), el("div",{class:"sub"},`${p.status} · ${open} pendiente${open===1?"":"s"}`),
-        cs ? el("div",{class:"badge"}, el("i"), STL[cs]) : null),
-      el("span",{class:"ring",style:`--p:${v}`,title:`${v}% completado`}, el("span",{},v+"%"))
+      el("span",{class:"pmain"}, el("div",{class:"name"},p.name, cs ? el("span",{class:"badge"}, el("i"), STL[cs]) : null), el("div",{class:"sub"},`${CATS[p.cat]?.label||p.cat} · ${p.status} · ${open} pendiente${open===1?"":"s"}`)),
+      el("span",{class:"pmeta",title:`${v}% completado`}, el("span",{class:"pnum"},v+"%"), el("span",{class:"pbar"}, el("i",{style:`width:${v}%`})))
     );
     L.append(b);
   }
@@ -1080,7 +1000,7 @@ $("dlgDelete").onclick=()=>{
   selected=state.projects[0]?.id; $("dlg").close(); save(); render();
 };
 $("newBtn").onclick=()=>openDialog(null);
-document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>{ state.view=b.dataset.v; save(); renderList(); });
+
 $("globalBtn").onclick=askGlobal;
 $("globalForm").addEventListener("submit",e=>{e.preventDefault();askGlobal();});
 $("globalClose").onclick=()=>$("globalOut").classList.remove("show");
