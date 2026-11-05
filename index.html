@@ -195,6 +195,7 @@ dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   dialog{margin:auto 0 0;width:100vw;max-width:100vw;border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 }
 .filters[hidden]{display:none}
+.chat-head .tab{cursor:default;display:inline-block}
 .fwd{align-self:flex-start;margin:-8px 0 0 8px;border:0;background:transparent;color:var(--muted);font-size:12px;padding:2px 4px}
 .fwd:hover{color:var(--accent)}
 
@@ -350,7 +351,7 @@ dialog h3{font:600 17px var(--display)}
   <label for="fwdTo">Proyecto de destino</label><select id="fwdTo"></select>
   <label for="fwdTxt">Mensaje</label><textarea id="fwdTxt" rows="6"></textarea>
   <div class="row"><button class="ghost" id="fwdCancel">Cancelar</button><span style="flex:1"></span>
-    <button class="ghost" id="fwdNote">Guardar en notas</button><button class="primary" id="fwdChat">Llevar al chat</button></div>
+    <button class="primary" id="fwdChat">Llevar al chat</button></div>
 </dialog>
 <dialog id="ghDlg">
   <h3>Conectar Claude por GitHub</h3>
@@ -406,7 +407,7 @@ const DEFAULT_PROJECTS = [
 
 /* ---------- State & persistence ---------- */
 let state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)), chats:{}, theme:null, updatedAt:0, mig2:true};
-let selected = "higienex", filter = "todos", tab = "tareas";
+let selected = "higienex", filter = "todos", tab = "claude";
 let db = null, docRef = null, sample = null, sampleChecked = false;
 const LS_KEY = "panel-proyectos-v1";
 
@@ -493,7 +494,7 @@ function render(){
   const active = state.projects.filter(p=>p.status==="Activo").length;
   $("subline").textContent = `${state.projects.length} proyectos · actualizado ${new Date(state.updatedAt||Date.now()).toLocaleDateString("es-ES",{day:"numeric",month:"short"})}`;
   const stv = Object.values(state.chatStatus||{});
-  const kp = [["Proyectos activos", active, `de ${state.projects.length}`, ""],["Tareas abiertas", open, "en todos los proyectos", ""],
+  const kp = [["Proyectos activos", active, `de ${state.projects.length}`, ""],["Completados por Claude", stv.filter(s=>s==="done").length, "sin revisar", ""],
               ["Claude trabajando", stv.filter(s=>s==="working").length, "en curso", "k-blue"],["Requieren tu respuesta", stv.filter(s=>s==="needs").length, "pendientes", "k-red"]];
   $("kpis").replaceChildren(...kp.map(([l,n,s,c])=>el("div",{class:"kpi "+c}, el("div",{class:"k-l"},l), el("div",{class:"k-n"},String(n)), el("div",{class:"k-s"},s))));
   $("countLbl").textContent = state.projects.length;
@@ -514,10 +515,10 @@ function renderList(){
     const cs = state.chatStatus?.[p.id];
     const STL = {working:"En curso", needs:"Requiere respuesta", done:"Completado"};
     const b = el("button",{class:"proj"+(cs?" st-"+cs:""),"aria-current":String(p.id===selected),style:`--cat:${CATS[p.cat]?.color||"var(--accent)"}`,
-      onclick:()=>{selected=p.id; if(tab==="claude") seen(p.id); renderList();renderDetail(); openMobileDetail();}},
+      onclick:()=>{selected=p.id; seen(p.id); renderList();renderDetail(); openMobileDetail();}},
       el("span",{class:"bar"}),
-      el("span",{class:"pmain"}, el("div",{class:"name"},p.name, cs ? el("span",{class:"badge"}, el("i"), STL[cs]) : null), el("div",{class:"sub"},`${CATS[p.cat]?.label||p.cat} · ${p.status} · ${open} pendiente${open===1?"":"s"}`)),
-      el("span",{class:"pmeta",title:`${v}% completado`}, el("span",{class:"pnum"},v+"%"), el("span",{class:"pbar"}, el("i",{style:`width:${v}%`})))
+      el("span",{class:"pmain"}, el("div",{class:"name"},p.name, cs ? el("span",{class:"badge"}, el("i"), STL[cs]) : null), el("div",{class:"sub"},`${CATS[p.cat]?.label||p.cat} · ${p.status}`)),
+      el("span",{class:"pmeta"}, el("span",{class:"pnum"}, (state.chats[p.id]||[]).length ? String((state.chats[p.id]||[]).length)+" msj." : ""))
     );
     L.append(b);
   }
@@ -540,11 +541,8 @@ function renderDetail(){
       p.link ? el("a",{href:p.link,target:"_blank",rel:"noopener"},"Abrir enlace") : null,
       el("button",{class:"ghost",onclick:()=>openDialog(p)},"Editar"))
   ));
-  const tabs = [["tareas",`Tareas (${p.tasks.filter(t=>!t.done).length})`],["claude","Hablar con Claude"],["notas","Notas"]];
-  D.append(el("div",{class:"tabs",role:"tablist"}, tabs.map(([k,l])=>el("button",{class:"tab",role:"tab","aria-selected":String(tab===k),onclick:()=>{tab=k; if(k==="claude") seen(p.id); renderDetail();}},l))));
-  if(tab==="tareas") D.append(paneTasks(p));
-  if(tab==="notas") D.append(paneNotes(p));
-  if(tab==="claude") D.append(paneChat(p));
+  D.append(el("div",{class:"tabs chat-head"}, el("span",{class:"tab","aria-selected":"true"},"Chat con Claude")));
+  D.append(paneChat(p));
 }
 function paneTasks(p){
   const inp = el("input",{placeholder:"Añade una tarea y pulsa Enter",maxlength:"200"});
@@ -577,13 +575,16 @@ function snapshot(onlyId){
     tareas:p.tasks.map(t=>({id:t.id,texto:t.text,hecha:t.done})),notas:(p.notes||"").slice(0,3000)}));
 }
 const RULES = (scopeTxt) => `Eres Claude, el asistente del panel de proyectos personal de Oussama (Barcelona; trabaja en contabilidad en PauTravelMoto y estudia/participa en el CFGS Administració i Finances). Responde siempre en español, de forma concisa y directa, sin relleno.
-Puedes GESTIONAR el panel con las herramientas: crear, completar o borrar tareas, cambiar estados, añadir notas y crear proyectos. Úsalas cuando te lo pida o cuando sea claramente lo que quiere; después resume en una frase lo que cambiaste. No inventes datos que no estén en el panel.
+Puedes GESTIONAR el panel con las herramientas: cambiar el estado de un proyecto y crear proyectos. Úsalas cuando te lo pida o cuando sea claramente lo que quiere; después resume en una frase lo que cambiaste. No inventes datos que no estén en el panel.
 Si necesitas que Oussama te responda o decida algo antes de poder seguir, termina tu respuesta con la línea [NECESITA-RESPUESTA]. Si has terminado, no la pongas.
 Desde aquí no puedes tocar GitHub, enviar correos, editar los archivos de los juegos ni nada fuera del panel. Cuando te pida algo así, llama a la herramienta enviar_al_chat con la petición redactada de forma completa y autosuficiente (qué proyecto, qué hay que hacer exactamente, repositorio si lo hay y cualquier detalle que haya dado), y dile en una frase que pulse «Enviar al chat» para que Claude lo haga desde el chat. No digas que ya está hecho.
 ${scopeTxt}
 Estado actual del panel (JSON):
 `;
 function makeTools(onAct, onSend){
+  return makeToolsAll(onAct, onSend).filter(t=>!["crear_tarea","marcar_tarea","borrar_tarea","anadir_nota"].includes(t.name));
+}
+function makeToolsAll(onAct, onSend){
   const getP = id => { const p = proj(id); if(!p) throw new Error("Proyecto no encontrado: "+id); return p; };
   const done = (msg) => { onAct(msg); save(); if(!quietRender) render(); return {ok:true}; };
   return [
@@ -640,7 +641,6 @@ function sendCard(text, p){
       const anchor = await comments.anchorFor(anchorEl);
       await comments.sendToClaude({anchor, text: `[Panel de proyectos${p?" · "+p.name:""}] ${body}`});
       card.classList.add("sent"); ta.readOnly=true; btn.textContent="Enviado"; why.textContent="Claude lo recibe en el chat y te contestará en el hilo de comentarios del panel.";
-      if(p){ p.tasks.push(T("En el chat: "+body.slice(0,120))); save(); renderList(); }
     }catch(e){
       btn.disabled=false;
       why.textContent = e?.code==="claude_unavailable" ? sendWhy.no_session : e?.code==="consent_required"||e?.code==="not_granted" ? "Necesitas permitir los comentarios para enviarlo." : e?.code==="rate_limited" ? "Espera un momento antes de enviar otra." : "No se pudo enviar: "+(e?.message||"error");
@@ -831,7 +831,7 @@ function paneChatGh(p){
   const pane = el("div",{class:"pane"});
   if(!ghToken()){
     pane.append(el("p",{class:"off"},"Claude no está abierto aquí. Conéctalo por GitHub y responderá aunque no tengas Claude abierto. ",
-      el("button",{class:"primary",style:"margin-top:8px",onclick:openGh},"🔑 Entrar con contraseña"), " ",
+      el("button",{class:"primary",style:"margin-top:8px",onclick:openGh},"Entrar con contraseña"), " ",
       el("a",{class:"offlink",href:ARTIFACT_URL,target:"_blank",rel:"noopener"},"o abrir en Claude")));
     return pane;
   }
@@ -884,11 +884,7 @@ function openFwd(p, text){
   $("fwdDlg").showModal();
 }
 $("fwdCancel").onclick = ()=>$("fwdDlg").close();
-$("fwdNote").onclick = ()=>{
-  const t = proj($("fwdTo").value), v = $("fwdTxt").value.trim(); if(!t||!v) return;
-  t.notes = ((t.notes||"").trim()+"\n\n"+v).trim(); save(); $("fwdDlg").close();
-  selected=t.id; tab="notas"; render(); openMobileDetail();
-};
+
 $("fwdChat").onclick = ()=>{
   const t = proj($("fwdTo").value), v = $("fwdTxt").value.trim(); if(!t||!v) return;
   drafts[t.id] = v; $("fwdDlg").close();
@@ -908,7 +904,7 @@ function paneChat(p){
   const addMsg = (cls, text) => { const m = el("div",{class:"msg "+cls}); if(cls==="bot") setHTMLSafe(m,text); else m.textContent=text; box.append(m); if(cls==="bot" && text && text!=="Pensando…") box.append(fwdBtn(p,text)); box.scrollTop=box.scrollHeight; return m; };
   if(!hist.length) pane.append(el("p",{class:"hint"},`Claude ve las tareas, notas y estado de ${p.name} y puede cambiarlos por ti.`));
   for(const m of hist) addMsg(m.role==="user"?"user":"bot", m.content);
-  const sugg = el("div",{class:"sugg"}, ["¿Qué hago ahora?","Divide la primera tarea en pasos","Propón 3 tareas nuevas","Resume el estado del proyecto"].map(s=>el("button",{onclick:()=>{ta.value=s;send();}},s)));
+  const sugg = el("div",{class:"sugg"}, ["¿Qué hago ahora?","Resume el estado del proyecto","Propón las siguientes mejoras","¿Qué fallos ves?"].map(s=>el("button",{onclick:()=>{ta.value=s;send();}},s)));
   const ta = el("textarea",{placeholder:"Escribe a Claude… (Enter para enviar)","aria-label":"Mensaje para Claude"});
   const sendBtn = el("button",{class:"primary"},"Enviar");
   const clearBtn = el("button",{class:"ghost",title:"Borrar conversación",onclick:()=>{ state.chats[p.id]=[]; save(); renderDetail(); }},"Limpiar");
@@ -991,7 +987,7 @@ $("dlgSave").onclick=()=>{
   const name=$("fName").value.trim(); if(!name){$("fName").focus();return;}
   let link=$("fLink").value.trim(); if(link && !/^https?:\/\//i.test(link)) link="https://"+link;
   if(editing){ Object.assign(editing,{name,cat:$("fCat").value,desc:$("fDesc").value.trim(),link}); }
-  else { const id="p"+uid(); state.projects.push({id,name,cat:$("fCat").value,status:"Activo",desc:$("fDesc").value.trim(),link,tasks:[],notes:""}); selected=id; tab="tareas"; }
+  else { const id="p"+uid(); state.projects.push({id,name,cat:$("fCat").value,status:"Activo",desc:$("fDesc").value.trim(),link,tasks:[],notes:""}); selected=id; tab="claude"; }
   $("dlg").close(); save(); render(); if(!editing) openMobileDetail();
 };
 $("dlgDelete").onclick=()=>{
